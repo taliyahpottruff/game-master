@@ -33,6 +33,10 @@ bot.on('message', msg=>{
                     channel: msg.channel.id,
                     name: msg.channel.name,
                     currentMessage: null,
+                    cache: {
+                        playerRole: null,
+                        gmRole: null
+                    },
                     lengthOfDays: 30,
                     timeLeft: 30,
                     day: 0,
@@ -43,31 +47,43 @@ bot.on('message', msg=>{
 
                 console.log(msg.channel.name);
 
-                //Create roles
+                //Create player role
                 msg.guild.roles.create({
                     data: {name: `${msg.channel.name}-player`},
                     reason: `For the game started by ${msg.author.username}` 
-                });
-                msg.guild.roles.create({
-                    data: {name: `${msg.channel.name}-gm`},
-                    reason: `For the game started by ${msg.author.username}`
-                });
+                }).then((playerRole) => {
+                    //Give player role the proper permissions
+                    activeGames[newGame].cache.playerRole = playerRole;
+                    msg.channel.updateOverwrite(playerRole, {
+                        SEND_MESSAGES: true
+                    }).catch(console.error);
 
-                //Setup perms
-                msg.channel.updateOverwrite(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-player`), {
-                    SEND_MESSAGES: true
-                }).catch(console.error);
-                msg.channel.updateOverwrite(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`), {
-                    SEND_MESSAGES: true
-                }).catch(console.error);
-
-                //Add GM role to GM
-                msg.member.roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`));
-                msg.guild.member(bot.user).roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`));
-
-                //Let everyone know
-                msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(activeGames[newGame - 1].timeLeft / 60 - 1))).then(message => {
-                    activeGames[newGame - 1].currentMessage = message;
+                    //Create the GM role
+                    msg.guild.roles.create({
+                        data: {name: `${msg.channel.name}-gm`},
+                        reason: `For the game started by ${msg.author.username}`
+                    }).then((gmRole) => {
+                        //Give GM role proper permissions
+                        activeGames[newGame].cache.gmRole = gmRole;
+                        msg.channel.updateOverwrite(gmRole, {
+                            SEND_MESSAGES: true
+                        }).catch(console.error);
+        
+                        //Add GM role to GM
+                        msg.member.roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`));
+                        msg.guild.member(bot.user).roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`));
+        
+                        //Let everyone know
+                        msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(activeGames[newGame - 1].timeLeft / 60 - 1))).then(message => {
+                            activeGames[newGame - 1].currentMessage = message;
+                        });
+                    }).catch((reason) => {
+                        msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create GM role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the GM role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?'));
+                        console.log(reason);
+                    });
+                }).catch((reason) => {
+                    msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create player role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the player role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?'));
+                    console.log(reason);
                 });
             }
         } else if (command == 'join') {
@@ -78,9 +94,9 @@ bot.on('message', msg=>{
                     name: msg.guild.member(msg.author).displayName,
                     alive: true
                 };
-                if (!activeGames[gameIndex].players.find(player => player.id == msg.author.id)) {
-                    activeGames[gameIndex].players.push(player);
-                    msg.member.roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-player`));
+                if (!game.players.find(player => player.id == msg.author.id)) {
+                    game.players.push(player);
+                    msg.member.roles.add(game.cache.playerRole);
                     msg.reply(`You have joined the game!`);
                     msg.channel.updateOverwrite(msg.author.id, {SEND_MESSAGES: true});
                 } else {
