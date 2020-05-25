@@ -50,8 +50,12 @@ bot.on('message', msg=>{
                     name: msg.guild.member(msg.author).displayName,
                     alive: true
                 };
-                activeGames[gameIndex].players.push(player);
-                msg.reply(`You have joined the game!`);
+                if (!activeGames[gameIndex].players.find(player => player.id == msg.author.id)) {
+                    activeGames[gameIndex].players.push(player);
+                    msg.reply(`You have joined the game!`);
+                } else {
+                    console.log(`${msg.author.username} is trying to double join!`);
+                }
             } else { //No game to join
                 msg.reply("Sorry brudda, there is no game running right now.");
             }
