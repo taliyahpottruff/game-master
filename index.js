@@ -33,8 +33,8 @@ bot.on('message', msg=>{
                     channel: msg.channel.id,
                     name: msg.channel.name,
                     currentMessage: null,
-                    lengthOfDays: 120,
-                    timeLeft: 120,
+                    lengthOfDays: 30,
+                    timeLeft: 30,
                     day: 0,
                     night: false,
                     players: [],
@@ -63,6 +63,7 @@ bot.on('message', msg=>{
 
                 //Add GM role to GM
                 msg.member.roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`));
+                msg.guild.member(bot.user).roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`));
 
                 //Let everyone know
                 msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(activeGames[newGame - 1].timeLeft / 60 - 1))).then(message => {
@@ -100,19 +101,57 @@ bot.on('message', msg=>{
                 msg.channel.send(liststring);
             }
         } else if (command == 'forcestop') {
-            if (gameIndex >= 0) {
-                if (game.gm == msg.author.id) { //User is gm
-                    activeGames.splice(gameIndex);
-                    msg.reply('the game has been forcibly terminated :(');
-                } else { //Not GM
-                    console.log(`${msg.author.username} wants to illegally stop a game`);
-                }
+            if (gameIndex >= 0) { //Ensure a game is running here
+                forceStop(msg, game, gameIndex);
             }
         }
     }
 })
 
 bot.login(token);
+
+//Commands
+function forceStop(msg, game, gameIndex) {
+    if (game.gm == msg.author.id) { //User is gm
+        endGame(gameIndex);
+
+        msg.reply('the game has been forcibly terminated :(');
+    } else { //Not GM
+        console.log(`${msg.author.username} wants to illegally stop a game`);
+    }
+}
+
+//Helper functions
+function endGame(gameIndex) {
+    var game = activeGames[gameIndex];
+    var server = bot.guilds.resolve(game.server);
+    var channel = server.channels.resolve(game.channel);
+    var playerRole = server.roles.cache.find(role => role.name == `${game.name}-player`);
+    var gmRole = server.roles.cache.find(role => role.name == `${game.name}-gm`);
+
+    //Remove roles
+    for (var i = 0; i < game.players.length; i++) {
+        server.member(game.players[i].id).roles.remove(playerRole);
+
+        if (game.players[i] == game.gm) //Remove GM
+            server.member(game.players[i]).roles.remove(gmRole);
+    }
+
+    //Reset perms
+    channel.permissionOverwrites.forEach((value, key) => {
+        if (key == playerRole.id || key == gmRole.id) {
+            console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
+            channel.permissionOverwrites.delete(key);
+        } else if (key == server.roles.everyone.id) {
+            console.log(`Reseting @everyone for #${channel.name}`);
+            channel.updateOverwrite(server.roles.everyone, {
+                SEND_MESSAGES: true
+            });
+        }
+    });
+
+    activeGames.splice(gameIndex); //Finally remove game from active
+}
 
 function gameExists(serverID, channelID) {
     return activeGames.filter(game => game.server == serverID).findIndex(game => game.channel == channelID);
