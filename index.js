@@ -17,7 +17,8 @@ bot.on('message', msg=>{
         var parts = msg.content.split(' ');
         var mentions = msg.mentions.users.array();
         var command = parts[0].replace(prefix, "");
-        var gameIndex = gameExists(msg.guild.id, msg.channel.id)
+        var gameIndex = gameExists(msg.guild.id, msg.channel.id);
+        var game = activeGames[gameIndex];
 
         if (command == 'start') {
             //Start a game if none is active in this channel
@@ -69,6 +70,15 @@ bot.on('message', msg=>{
                     liststring += `${activeGames[gameIndex].players[i].name}\n`;
                 }
                 msg.channel.send(liststring);
+            }
+        } else if (command == 'forcestop') {
+            if (gameIndex >= 0) {
+                if (game.gm == msg.author.id) { //User is gm
+                    activeGames.splice(gameIndex);
+                    msg.reply('the game has been forcibly terminated :(');
+                } else { //Not GM
+                    console.log(`${msg.author.username} wants to illegally stop a game`);
+                }
             }
         }
     }
