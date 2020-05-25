@@ -142,8 +142,8 @@ function endGame(gameIndex) {
     var game = activeGames[gameIndex];
     var server = bot.guilds.resolve(game.server);
     var channel = server.channels.resolve(game.channel);
-    var playerRole = server.roles.cache.find(role => role.name == `${game.name}-player`);
-    var gmRole = server.roles.cache.find(role => role.name == `${game.name}-gm`);
+    var playerRole = game.cache.playerRole;
+    var gmRole = game.cache.gmRole;
 
     //Remove roles
     for (var i = 0; i < game.players.length; i++) {
