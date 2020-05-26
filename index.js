@@ -6,6 +6,10 @@ dotenv.config();
 const Discord = require('discord.js');
 const bot = new Discord.Client();
 
+const mongo = require('mongodb');
+const MongoClient = mongo.MongoClient;
+var db;
+
 const token = process.env.TOKEN;
 const prefix = "!";
 
@@ -122,9 +126,7 @@ bot.on('message', msg=>{
             }
         }
     }
-})
-
-bot.login(token);
+});
 
 //Commands
 function forceStop(msg, game, gameIndex) {
@@ -232,3 +234,12 @@ const gameLoop = setInterval(() => {
     }
 }, 1000);
 gameLoop.unref();
+
+MongoClient.connect(`mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@ds135540.mlab.com:35540/game-master`, (err, res) => {
+    if (err) console.log('Unable to connect to DB', err);
+    else {
+        console.log('Connected to DB');
+        db = res;
+        bot.login(token);
+    }
+});
