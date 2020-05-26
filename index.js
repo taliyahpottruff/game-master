@@ -98,7 +98,7 @@ bot.on('message', msg=>{
                     game.players.push(player);
                     msg.member.roles.add(game.cache.playerRole);
                     msg.reply(`You have joined the game!`);
-                    msg.channel.updateOverwrite(msg.author.id, {SEND_MESSAGES: true});
+                    //msg.channel.updateOverwrite(msg.author.id, {SEND_MESSAGES: true}); // Why is this here?
                 } else {
                     console.log(`${msg.author.username} is trying to double join!`);
                 }
