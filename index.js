@@ -26,7 +26,7 @@ bot.on('message', msg=>{
                 //msg.author.send("A game already exists there silly goose.")
                 //Do nothing because Lumi is forcing me not to send DMs
             } else { //No game exist right now, go ahead and create
-                var newGame = activeGames.push({
+                var newIndex = activeGames.push({
                     type: "Mafia",
                     gm: msg.author.id,
                     server: msg.guild.id,
@@ -43,9 +43,9 @@ bot.on('message', msg=>{
                     night: false,
                     players: [],
                     votes: []
-                });
+                }) - 1;
 
-                console.log(msg.channel.name);
+                var newGame = activeGames[newIndex];
 
                 //Create player role
                 msg.guild.roles.create({
@@ -53,7 +53,7 @@ bot.on('message', msg=>{
                     reason: `For the game started by ${msg.author.username}` 
                 }).then((playerRole) => {
                     //Give player role the proper permissions
-                    activeGames[newGame].cache.playerRole = playerRole;
+                    newGame.cache.playerRole = playerRole;
                     msg.channel.updateOverwrite(playerRole, {
                         SEND_MESSAGES: true
                     }).catch(console.error);
@@ -64,25 +64,25 @@ bot.on('message', msg=>{
                         reason: `For the game started by ${msg.author.username}`
                     }).then((gmRole) => {
                         //Give GM role proper permissions
-                        activeGames[newGame].cache.gmRole = gmRole;
+                        newGame.cache.gmRole = gmRole;
                         msg.channel.updateOverwrite(gmRole, {
                             SEND_MESSAGES: true
                         }).catch(console.error);
         
                         //Add GM role to GM
-                        msg.member.roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`));
-                        msg.guild.member(bot.user).roles.add(msg.guild.roles.cache.find(role => role.name == `${msg.channel.name}-gm`));
+                        msg.member.roles.add(gmRole);
+                        msg.guild.member(bot.user).roles.add(gmRole);
         
                         //Let everyone know
-                        msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(activeGames[newGame - 1].timeLeft / 60 - 1))).then(message => {
-                            activeGames[newGame - 1].currentMessage = message;
+                        msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft / 60 - 1))).then(message => {
+                            newGame.currentMessage = message;
                         });
                     }).catch((reason) => {
-                        msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create GM role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the GM role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?'));
+                        msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create GM role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the GM role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?').setColor('#FF0000'));
                         console.log(reason);
                     });
                 }).catch((reason) => {
-                    msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create player role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the player role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?'));
+                    msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create player role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the player role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?').setColor('#FF0000'));
                     console.log(reason);
                 });
             }
