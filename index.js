@@ -185,7 +185,9 @@ const gameLoop = setInterval(() => {
     //Tick
     for (var i = 0; i < activeGames.length; i++) {
         var game = activeGames[i];
-        activeGames[i].timeLeft--;
+        var server = bot.guilds.resolve(activeGames[i].server);
+        var channel = server.channels.resolve(activeGames[i].channel);
+        game.timeLeft--;
         
         //Check for signup period
         if (activeGames[i].day < 1 && activeGames[i].timeLeft % 60 === 0) {
@@ -202,8 +204,18 @@ const gameLoop = setInterval(() => {
             
             if (activeGames[i].type == "Mafia") {
                 if (activeGames[i].day > 0) { //In game
-                    if (activeGames[i].night) activeGames[i].day++;
-                    activeGames[i].night = !activeGames[i].night;
+                    if (activeGames[i].night) {
+                        game.day++;
+                        game.night = false;
+                        channel.updateOverwrite(game.cache.playerRole, {
+                            SEND_MESSAGES: true
+                        });
+                    } else {
+                        game.night = true;
+                        channel.updateOverwrite(game.cache.playerRole, {
+                            SEND_MESSAGES: false
+                        });
+                    }
                     activeGames[i].votes = [];
                     bot.guilds.resolve(activeGames[i].server).channels.resolve(activeGames[i].channel).send(`**${(activeGames[i].night) ? "Night" : "Day"} ${activeGames[i].day} has begun! You have ${activeGames[i].lengthOfDays} seconds to ${(activeGames[i].night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`}`);
                 } else {
@@ -213,7 +225,7 @@ const gameLoop = setInterval(() => {
                         SEND_MESSAGES: false
                     });
                     activeGames[i].day = 1;
-                    bot.guilds.resolve(activeGames[i].server).channels.resolve(activeGames[i].channel).send(`**The game has begun! You have ${activeGames[i].lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`);
+                    channel.send(`**The game has begun! You have ${activeGames[i].lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`);
                 }
             }
         }
