@@ -166,6 +166,10 @@ function endGame(gameIndex) {
         }
     });
 
+    //Delete game roles
+    game.cache.playerRole.delete('Game ended');
+    game.cache.gmRole.delete('Game ended');
+
     activeGames.splice(gameIndex); //Finally remove game from active
 }
 
