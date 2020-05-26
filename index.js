@@ -122,9 +122,7 @@ bot.on('message', msg=>{
             }
         }
     }
-})
-
-bot.login(token);
+});
 
 //Commands
 function forceStop(msg, game, gameIndex) {
@@ -232,3 +230,5 @@ const gameLoop = setInterval(() => {
     }
 }, 1000);
 gameLoop.unref();
+
+bot.login(token);
