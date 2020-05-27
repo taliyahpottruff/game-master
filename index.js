@@ -6,6 +6,8 @@ dotenv.config();
 const Discord = require('discord.js');
 const bot = new Discord.Client();
 
+const moment = require('moment');
+
 const token = process.env.TOKEN;
 const prefix = "!";
 
@@ -38,7 +40,7 @@ bot.on('message', msg=>{
                         gmRole: null
                     },
                     lengthOfDays: 30,
-                    timeLeft: 30,
+                    timeLeft: moment().add(30, 'seconds'),
                     day: 0,
                     night: false,
                     players: [],
@@ -74,7 +76,7 @@ bot.on('message', msg=>{
                         msg.guild.member(bot.user).roles.add(gmRole);
         
                         //Let everyone know
-                        msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft / 60 - 1))).then(message => {
+                        msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft.diff(moment(), 'seconds') / 60 - 1))).then(message => {
                             newGame.currentMessage = message;
                         });
                     }).catch((reason) => {
@@ -185,24 +187,24 @@ const gameLoop = setInterval(() => {
         var game = activeGames[i];
         var server = bot.guilds.resolve(activeGames[i].server);
         var channel = server.channels.resolve(activeGames[i].channel);
-        game.timeLeft--;
+        const timeLeft = game.timeLeft.diff(moment(), 'seconds');
         
         //Check for signup period
-        if (activeGames[i].day < 1 && activeGames[i].timeLeft % 60 === 0) {
+        if (game.day < 1 && timeLeft % 60 === 0) {
             if (activeGames[i].currentMessage) {
                 activeGames[i].currentMessage.edit(new Discord.MessageEmbed()
                     .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nType \`${prefix}join\` to join this fun game!`)
-                    .addField('Time Left', formatMinutes(activeGames[i].timeLeft / 60 - 1)));
+                    .addField('Time Left', formatMinutes(timeLeft / 60 - 1)));
             }
         }
 
         //Game logic
-        if (activeGames[i].timeLeft <= 0) { //Proceed with game logic
-            activeGames[i].timeLeft = activeGames[i].lengthOfDays;
+        if (timeLeft <= 0) { //Proceed with game logic
+            game.timeLeft = moment().add(game.lengthOfDays, 'seconds');
             
-            if (activeGames[i].type == "Mafia") {
-                if (activeGames[i].day > 0) { //In game
-                    if (activeGames[i].night) {
+            if (game.type == "Mafia") {
+                if (game.day > 0) { //In game
+                    if (game.night) {
                         game.day++;
                         game.night = false;
                         channel.updateOverwrite(game.cache.playerRole, {
@@ -214,16 +216,16 @@ const gameLoop = setInterval(() => {
                             SEND_MESSAGES: false
                         });
                     }
-                    activeGames[i].votes = [];
-                    bot.guilds.resolve(activeGames[i].server).channels.resolve(activeGames[i].channel).send(`**${(activeGames[i].night) ? "Night" : "Day"} ${activeGames[i].day} has begun! You have ${activeGames[i].lengthOfDays} seconds to ${(activeGames[i].night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`}`);
+                    game.votes = [];
+                    bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have ${game.lengthOfDays} seconds to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`}`);
                 } else {
                     //Start the game
                     var channel = bot.guilds.resolve(game.server).channels.resolve(game.channel);
                     channel.updateOverwrite(channel.guild.roles.everyone, {
                         SEND_MESSAGES: false
                     });
-                    activeGames[i].day = 1;
-                    channel.send(`**The game has begun! You have ${activeGames[i].lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`);
+                    game.day = 1;
+                    channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`);
                 }
             }
         }
@@ -231,4 +233,6 @@ const gameLoop = setInterval(() => {
 }, 1000);
 gameLoop.unref();
 
-bot.login(token);
+bot.login(token).then((value) => {
+    console.log("Game Master is now online!");
+});
