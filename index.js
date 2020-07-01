@@ -17,7 +17,9 @@ var activeGames = [];
 bot.on('message', msg=>{
     //Log message
     //TODO: Only do this when it's in an active game
-    console.log(`(${msg.guild.name})[#${msg.channel.name}] ${msg.author.tag}: ${msg.content}`);
+    if (gameExists(msg.guild.id, msg.author.id) > 1) {
+        console.log(`(${msg.guild.name})[#${msg.channel.name}] ${msg.author.tag}: ${msg.content}`);
+    }
 
     //Handle message
     if(msg.content.startsWith(prefix)) { // Commandsa
