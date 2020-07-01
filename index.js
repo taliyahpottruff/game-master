@@ -1,22 +1,33 @@
-/// Base skeleton code by Lumpy
+/// Base skeleton code by Danny (Lumpy)
 
 const dotenv = require('dotenv');
 dotenv.config();
 
+// DISCORD SETUP
 const Discord = require('discord.js');
 const bot = new Discord.Client();
 
+// MOMENT SETUP
 const moment = require('moment');
 
+// MONGODB SETUP
+const mongodb = require('mongodb');
+const MongoClient = mongodb.MongoClient;
+const assert = require('assert');
+const db_url = `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@ds135540.mlab.com:35540/game-master`;
+const db_name = 'game-master';
+var db;
+var db_col_games;
+
+// MISC
 const token = process.env.TOKEN;
 const prefix = "!";
 
 //Game variables
 var activeGames = [];
 
-bot.on('message', msg=>{
+bot.on('message', async msg=>{
     //Log message
-    //TODO: Only do this when it's in an active game
     if (gameExists(msg.guild.id, msg.author.id) > 1) {
         console.log(`(${msg.guild.name})[#${msg.channel.name}] ${msg.author.tag}: ${msg.content}`);
     }
@@ -55,6 +66,7 @@ bot.on('message', msg=>{
                 }) - 1;
 
                 var newGame = activeGames[newIndex];
+                await db_col_games.insertOne(newGame);
 
                 //Create player role
                 msg.guild.roles.create({
@@ -194,7 +206,7 @@ const gameLoop = setInterval(() => {
         var game = activeGames[i];
         var server = bot.guilds.resolve(activeGames[i].server);
         var channel = server.channels.resolve(activeGames[i].channel);
-        const timeLeft = game.timeLeft.diff(moment(), 'seconds');
+        const timeLeft = moment(game.timeLeft).diff(moment(), 'seconds');
         
         //Check for signup period
         if (game.day < 1 && timeLeft % 60 === 0) {
@@ -240,6 +252,27 @@ const gameLoop = setInterval(() => {
 }, 1000);
 gameLoop.unref();
 
-bot.login(token).then((value) => {
-    console.log("Game Master is now online!");
+// FINAL: START BOT PROCESSES
+MongoClient.connect(db_url, (err, client) => {
+    assert.equal(null, err);
+    console.log('~ DATABASE CONNECTION: SUCCESS');
+
+    db = client.db(db_name);
+
+    //Fetch info from DB
+    activeGames = [];
+    db_col_games = db.collection('games');
+    db_col_games.find().forEach((doc) => {
+        activeGames.push(doc);
+    }, (err) => {
+        if (err) console.log(err);
+        
+        console.log(`Finished pulling games!`);
+        console.log(activeGames);
+
+        //Log in the bot
+        bot.login(token).then((value) => {
+            console.log("Game Master is now online!");
+        });
+    });
 });
