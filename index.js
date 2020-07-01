@@ -21,7 +21,7 @@ var db_col_games;
 
 // MISC
 const token = process.env.TOKEN;
-const prefix = "!";
+const prefix = "/";
 var ready = false;
 
 // CUSTOM MODULES
@@ -97,7 +97,7 @@ bot.on('message', async msg=>{
                             msg.guild.member(bot.user).roles.add(gmRole);
                             
                             //Let everyone know
-                            msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft.diff(moment(), 'seconds') / 60 - 1))).then(message => {
+                            msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}in\` to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft.diff(moment(), 'seconds') / 60 - 1))).then(message => {
                                 newGame.currentMessage = message;
                                 console.log(newGame);
                                 const serializedGame = databaseUtils.serializeGame(newGame);
@@ -122,7 +122,7 @@ bot.on('message', async msg=>{
                         console.log(reason);
                     });
                 }
-            } else if (command == 'join') {
+            } else if (command == 'in' || command == 'join') {
                 //Join the current game active in the channel if available
                 if (gameIndex >= 0) { //There is a game to join
                     var player = {
@@ -243,7 +243,7 @@ const gameLoop = setInterval(() => {
         if (game.day < 1 && timeLeft % 60 === 0) {
             if (activeGames[i].currentMessage) {
                 activeGames[i].currentMessage.edit(new Discord.MessageEmbed()
-                    .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nType \`${prefix}join\` to join this fun game!`)
+                    .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nType \`${prefix}in\` to join this fun game!`)
                     .addField('Time Left', formatMinutes(timeLeft / 60 - 1)));
             }
         }
