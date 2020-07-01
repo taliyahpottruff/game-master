@@ -51,7 +51,7 @@ bot.on('message', async msg=>{
                     //msg.author.send("A game already exists there silly goose.")
                     //Do nothing because Lumi is forcing me not to send DMs
                 } else { //No game exist right now, go ahead and create
-                    var newIndex = activeGames.push({
+                    var newGame = {
                         type: "Mafia",
                         gm: msg.author.id,
                         server: msg.guild.id,
@@ -68,9 +68,7 @@ bot.on('message', async msg=>{
                         night: false,
                         players: [],
                         votes: []
-                    }) - 1;
-
-                    var newGame = activeGames[newIndex];
+                    };
 
                     //Create player role
                     msg.guild.roles.create({
@@ -107,7 +105,9 @@ bot.on('message', async msg=>{
                             
                                 db_col_games.insertOne(serializedGame).then((result) => {
                                     console.log('Game is now in DB!');
-                                    newGame._id = result.ops._id;
+                                    newGame._id = result.ops[0]._id;
+                                    console.log(newGame);
+                                    activeGames.push(newGame);
                                 }).catch((err) => {
                                     console.log("CRITICAL ERROR IN INSERTION!");
                                     console.log(err);
@@ -164,48 +164,63 @@ bot.on('message', async msg=>{
 //Commands
 function forceStop(msg, game, gameIndex) {
     if (game.gm == msg.author.id) { //User is gm
-        endGame(gameIndex);
-
-        msg.reply('the game has been forcibly terminated :(');
+        endGame(gameIndex).then(value => {
+            if (value) {
+                msg.reply('the game has been forcibly terminated.');
+            } else {
+                msg.reply('the game could not be stopped. Please contact someone for support.');
+            }
+        }).catch(console.error);
     } else { //Not GM
         console.log(`${msg.author.username} wants to illegally stop a game`);
     }
 }
 
 //Helper functions
-function endGame(gameIndex) {
+async function endGame(gameIndex) {
     var game = activeGames[gameIndex];
     var server = bot.guilds.resolve(game.server);
     var channel = server.channels.resolve(game.channel);
     var playerRole = game.cache.playerRole;
     var gmRole = game.cache.gmRole;
 
-    //Remove roles
-    for (var i = 0; i < game.players.length; i++) {
-        server.member(game.players[i].id).roles.remove(playerRole);
+    var success = false;
 
-        if (game.players[i] == game.gm) //Remove GM
-            server.member(game.players[i]).roles.remove(gmRole);
-    }
+    //Finally remove game from active
+    await db_col_games.deleteOne({_id: game._id}).then(result => {
+        if (result.deletedCount > 0) {
+            //Remove roles
+            for (var i = 0; i < game.players.length; i++) {
+                server.member(game.players[i].id).roles.remove(playerRole);
 
-    //Reset perms
-    channel.permissionOverwrites.forEach((value, key) => {
-        if (key == playerRole.id || key == gmRole.id) {
-            console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
-            channel.permissionOverwrites.delete(key);
-        } else if (key == server.roles.everyone.id) {
-            console.log(`Reseting @everyone for #${channel.name}`);
-            channel.updateOverwrite(server.roles.everyone, {
-                SEND_MESSAGES: true
+                if (game.players[i] == game.gm) //Remove GM
+                    server.member(game.players[i]).roles.remove(gmRole);
+            }
+
+            //Reset perms
+            channel.permissionOverwrites.forEach((value, key) => {
+                if (key == playerRole.id || key == gmRole.id) {
+                    console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
+                    channel.permissionOverwrites.delete(key);
+                } else if (key == server.roles.everyone.id) {
+                    console.log(`Reseting @everyone for #${channel.name}`);
+                    channel.updateOverwrite(server.roles.everyone, {
+                        SEND_MESSAGES: true
+                    });
+                }
             });
+
+            //Delete game roles
+            game.cache.playerRole.delete('Game ended');
+            game.cache.gmRole.delete('Game ended');
+
+            activeGames.splice(gameIndex);
+
+            success = true;
         }
-    });
+    }).catch(console.error);
 
-    //Delete game roles
-    game.cache.playerRole.delete('Game ended');
-    game.cache.gmRole.delete('Game ended');
-
-    activeGames.splice(gameIndex); //Finally remove game from active
+    return success;
 }
 
 function gameExists(serverID, channelID) {
@@ -272,7 +287,7 @@ gameLoop.unref();
 //Log in the bot
 bot.login(token).then((value) => {
     console.log("Game Master is now online!");
-    MongoClient.connect(db_url, {useUnifiedTopology: true}, (err, client) => {
+    MongoClient.connect(db_url, {useUnifiedTopology: true}, async (err, client) => {
         assert.equal(null, err);
         console.log('~ DATABASE CONNECTION: SUCCESS');
 
@@ -281,14 +296,24 @@ bot.login(token).then((value) => {
         //Fetch info from DB
         activeGames = [];
         db_col_games = db.collection('games');
-        db_col_games.find().forEach((doc) => {
-            activeGames.push(databaseUtils.deserializeGame(doc, bot));
+        const gameArray = await db_col_games.find().toArray();
+        for (var i = 0; i < gameArray.length; i++) {
+            const gameObj = await databaseUtils.deserializeGame(gameArray[i], bot);
+            activeGames.push(gameObj);
+        }
+        console.log(`Finished pulling games!`);
+        console.log(activeGames);
+        ready = true;
+        /*db_col_games.find().forEach((doc) => {
+            const game = databaseUtils.deserializeGame(doc, bot);
+            console.log(game);
+            activeGames.push(game);
         }, (err) => {
             if (err) console.log(err);
             
             console.log(`Finished pulling games!`);
             console.log(activeGames);
             ready = true;
-        });
+        });*/
     });
 });

@@ -23,7 +23,7 @@ const serializeGame = (game) => {
 };
 exports.serializeGame = serializeGame;
 
-const deserializeGame = (game, bot) => {
+const deserializeGame = async (game, bot) => {
     const server = bot.guilds.resolve(game.server);
     const channel = server.channels.resolve(game.channel);
 
@@ -34,10 +34,10 @@ const deserializeGame = (game, bot) => {
         server: game.server,
         channel: game.channel,
         name: game.name,
-        currentMessage: channel.messages.fetch(game.currentMessage),
+        currentMessage: await channel.messages.fetch(game.currentMessage),
         cache: {
-            playerRole: server.roles.fetch(game.cache.playerRole),
-            gmRole: server.roles.fetch(game.cache.gmRole)
+            playerRole: await channel.guild.roles.fetch(game.cache.playerRole),
+            gmRole: await channel.guild.roles.fetch(game.cache.gmRole)
         },
         lengthOfDays: game.lengthOfDays,
         timeLeft: moment(game.timeLeft),
@@ -46,6 +46,7 @@ const deserializeGame = (game, bot) => {
         players: [],
         votes: []
     };
+
     return obj;
 };
 exports.deserializeGame = deserializeGame;
