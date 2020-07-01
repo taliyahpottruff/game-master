@@ -23,6 +23,9 @@ var db_col_games;
 const token = process.env.TOKEN;
 const prefix = "!";
 
+// CUSTOM MODULES
+const databaseUtils = require('./database');
+
 //Game variables
 var activeGames = [];
 
@@ -66,7 +69,6 @@ bot.on('message', async msg=>{
                 }) - 1;
 
                 var newGame = activeGames[newIndex];
-                await db_col_games.insertOne(newGame);
 
                 //Create player role
                 msg.guild.roles.create({
@@ -93,10 +95,20 @@ bot.on('message', async msg=>{
                         //Add GM role to GM
                         msg.member.roles.add(gmRole);
                         msg.guild.member(bot.user).roles.add(gmRole);
-        
+                        
                         //Let everyone know
                         msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}join\` to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft.diff(moment(), 'seconds') / 60 - 1))).then(message => {
                             newGame.currentMessage = message;
+                            console.log(newGame);
+                            const serializedGame = databaseUtils.serializeGame(newGame);
+                            console.log(serializedGame);
+                        
+                            /*db_col_games.insertOne(newGame).then((result) => {
+                                console.log('Game is now in DB!');
+                            }).catch((err) => {
+                                console.log("CRITICAL ERROR IN INSERTION!");
+                                console.log(err);
+                            });*/
                         });
                     }).catch((reason) => {
                         msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create GM role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the GM role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?').setColor('#FF0000'));
