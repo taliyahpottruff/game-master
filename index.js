@@ -111,7 +111,9 @@ bot.on('message', async msg=>{
                             msg.guild.member(bot.user).roles.add(gmRole);
                             
                             //Let everyone know
-                            msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}in\` to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft.diff(moment(), 'seconds') / 60 - 1))).then(message => {
+                            msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nReact with 👍 to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft.diff(moment(), 'seconds') / 60 - 1))).then(message => {
+                                message.react('👍');
+                                
                                 newGame.currentMessage = message;
                                 const serializedGame = databaseUtils.serializeGame(newGame);
                                 console.log(serializedGame);
@@ -134,7 +136,7 @@ bot.on('message', async msg=>{
                         console.log(reason);
                     });
                 }
-            } else if (command == 'in' || command == 'join') {
+            } /* else if (command == 'in' || command == 'join') { //Deprecated
                 //Join the current game active in the channel if available
                 if (gameIndex >= 0) { //There is a game to join
                     if (game.day > 0) { //Game is already in progress
@@ -157,7 +159,7 @@ bot.on('message', async msg=>{
                 } else { //No game to join
                     msg.reply("Sorry brudda, there is no game running right now.");
                 }
-            } else if (command == 'lynch') {
+            } */ else if (command == 'lynch') {
                 //Vote to lynch a play if available
             } else if (command == 'playerlist') {
                 //List all of the player; format to game
@@ -170,19 +172,48 @@ bot.on('message', async msg=>{
                 }
             } else if (command == 'forcestop') {
                 if (gameIndex >= 0) { //Ensure a game is running here
-                    forceStop(msg, game, gameIndex);
+                    forceStop(msg, game, gameIndex, parts.length > 1);
                 }
             }
         }
     }
 });
 
+bot.on('messageReactionAdd', async (messageReaction, user) => {
+    if (!user.bot && messageReaction._emoji.name == '👍') {
+        const game = matchSignupMessage(messageReaction.message);
+        if (game) {
+            if (game.day > 0) { //Game is already in progress
+                //msg.reply('the game you are trying to join is already in progress...');
+            } else { //Game is in signup phase
+                var player = {
+                    id: user.id,
+                    name: messageReaction.message.guild.member(user).displayName,
+                    alive: true
+                };
+                if (!game.players.find(player => player.id == user.id)) {
+                    
+                    messageReaction.message.guild.member(user).roles.add(game.cache.playerRole).then(user => {
+                        game.players.push(player);
+                        messageReaction.message.channel.send(`${user.toString()} has joined the game!`);
+                        db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
+                    }).catch(console.error);
+                } else {
+                    console.log(`${user.username} is trying to double join!`);
+                }
+            }
+        } else {
+            console.error('Unable to find game linked with message');
+        }
+    }
+});
+
 //Commands
-function forceStop(msg, game, gameIndex) {
+function forceStop(msg, game, gameIndex, deleteChannels) {
     if (game.gm == msg.author.id) { //User is gm
-        endGame(gameIndex).then(value => {
+        endGame(gameIndex, deleteChannels).then(value => {
             if (value) {
-                msg.reply('the game has been forcibly terminated.');
+                console.log('The game has been forcibly terminated.');
             } else {
                 msg.reply('the game could not be stopped. Please contact someone for support.');
             }
@@ -193,7 +224,7 @@ function forceStop(msg, game, gameIndex) {
 }
 
 //Helper functions
-async function endGame(gameIndex) {
+async function endGame(gameIndex, deleteChannels) {
     var game = activeGames[gameIndex];
     var server = bot.guilds.resolve(game.server);
     var channel = server.channels.resolve(game.channel);
@@ -232,6 +263,11 @@ async function endGame(gameIndex) {
 
             activeGames.splice(gameIndex);
 
+            //Delete channels if applicable
+            if (deleteChannels) {
+                channel.delete(`GM wanted game to be deleted.`);
+            }
+
             success = true;
         }
     }).catch(console.error);
@@ -247,6 +283,10 @@ function formatMinutes(minutes) {
     return `${(minutes < 1) ? "Less than " : ""}${(minutes < 1) ? 1 : minutes} minute${(minutes > 1) ? "s" : ""}`;
 }
 
+function matchSignupMessage(message) {
+    return activeGames.find(game => game.currentMessage == message);
+}
+
 const gameLoop = setInterval(() => {
     //Tick
     for (var i = 0; i < activeGames.length; i++) {
@@ -259,7 +299,7 @@ const gameLoop = setInterval(() => {
         if (game.day < 1 && timeLeft % 60 === 0) {
             if (activeGames[i].currentMessage) {
                 activeGames[i].currentMessage.edit(new Discord.MessageEmbed()
-                    .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nType \`${prefix}in\` to join this fun game!`)
+                    .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nReact with 👍 to join this fun game!`)
                     .addField('Time Left', formatMinutes(timeLeft / 60 - 1)));
             }
         }
@@ -332,4 +372,4 @@ bot.login(token).then((value) => {
             ready = true;
         });*/
     });
-});
+}).catch(console.error);
