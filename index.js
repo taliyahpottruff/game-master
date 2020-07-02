@@ -104,9 +104,8 @@ bot.on('message', async msg=>{
                                 console.log(serializedGame);
                             
                                 db_col_games.insertOne(serializedGame).then((result) => {
-                                    console.log('Game is now in DB!');
+                                    console.log('Game has successfully been created!');
                                     newGame._id = result.ops[0]._id;
-                                    console.log(newGame);
                                     activeGames.push(newGame);
                                 }).catch((err) => {
                                     console.log("CRITICAL ERROR IN INSERTION!");
@@ -125,18 +124,22 @@ bot.on('message', async msg=>{
             } else if (command == 'in' || command == 'join') {
                 //Join the current game active in the channel if available
                 if (gameIndex >= 0) { //There is a game to join
-                    var player = {
-                        id: msg.author.id,
-                        name: msg.guild.member(msg.author).displayName,
-                        alive: true
-                    };
-                    if (!game.players.find(player => player.id == msg.author.id)) {
-                        game.players.push(player);
-                        msg.member.roles.add(game.cache.playerRole);
-                        msg.reply(`You have joined the game!`);
-                        //msg.channel.updateOverwrite(msg.author.id, {SEND_MESSAGES: true}); // Why is this here?
-                    } else {
-                        console.log(`${msg.author.username} is trying to double join!`);
+                    if (game.day > 0) { //Game is already in progress
+                        msg.reply('the game you are trying to join is already in progress...');
+                    } else { //Game is in signup phase
+                        var player = {
+                            id: msg.author.id,
+                            name: msg.guild.member(msg.author).displayName,
+                            alive: true
+                        };
+                        if (!game.players.find(player => player.id == msg.author.id)) {
+                            game.players.push(player);
+                            msg.member.roles.add(game.cache.playerRole);
+                            msg.reply(`You have joined the game!`);
+                            db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(console.log).catch(console.error);
+                        } else {
+                            console.log(`${msg.author.username} is trying to double join!`);
+                        }
                     }
                 } else { //No game to join
                     msg.reply("Sorry brudda, there is no game running right now.");
