@@ -26,6 +26,8 @@ var ready = false;
 
 // CUSTOM MODULES
 const databaseUtils = require('./database');
+const utils = require('./utils');
+const manager = require('./manager');
 
 //Game variables
 var activeGames = [];
@@ -58,7 +60,7 @@ bot.on('message', async msg=>{
                     const firstSpace = msg.content.indexOf(' ');
                     const gameName = msg.content.slice(firstSpace+1);
 
-                    console.log(`Creating "${gameName}" in #${msg.channel.name}:`);
+                    console.log(`Creating "${gameName}" in #${utils.parseGameName(gameName)}:`);
 
                     var newGame = {
                         type: "Mafia",
