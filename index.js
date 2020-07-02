@@ -59,14 +59,17 @@ bot.on('message', async msg=>{
 
                     const firstSpace = msg.content.indexOf(' ');
                     const gameName = msg.content.slice(firstSpace+1);
+                    const gamePrefix = utils.parseGameName(gameName);
 
-                    console.log(`Creating "${gameName}" in #${utils.parseGameName(gameName)}:`);
+                    console.log(`~ Creating "${gameName}" in #${gamePrefix}:`);
+
+                    const channels = await manager.initializeChannels(msg.guild, msg.channel.parent, gamePrefix);
 
                     var newGame = {
                         type: "Mafia",
                         gm: msg.author.id,
                         server: msg.guild.id,
-                        channel: msg.channel.id,
+                        channel: channels.primaryChannel.id,
                         name: gameName,
                         currentMessage: null,
                         cache: {
@@ -83,23 +86,23 @@ bot.on('message', async msg=>{
 
                     //Create player role
                     msg.guild.roles.create({
-                        data: {name: `${msg.channel.name}-player`},
+                        data: {name: `${gamePrefix}-player`},
                         reason: `For the game started by ${msg.author.username}` 
                     }).then((playerRole) => {
                         //Give player role the proper permissions
                         newGame.cache.playerRole = playerRole;
-                        msg.channel.updateOverwrite(playerRole, {
+                        channels.primaryChannel.updateOverwrite(playerRole, {
                             SEND_MESSAGES: true
                         }).catch(console.error);
 
                         //Create the GM role
                         msg.guild.roles.create({
-                            data: {name: `${msg.channel.name}-gm`},
+                            data: {name: `${gamePrefix}-gm`},
                             reason: `For the game started by ${msg.author.username}`
                         }).then((gmRole) => {
                             //Give GM role proper permissions
                             newGame.cache.gmRole = gmRole;
-                            msg.channel.updateOverwrite(gmRole, {
+                            channels.primaryChannel.updateOverwrite(gmRole, {
                                 SEND_MESSAGES: true
                             }).catch(console.error);
             
@@ -216,10 +219,10 @@ async function endGame(gameIndex) {
                     console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
                     channel.permissionOverwrites.delete(key);
                 } else if (key == server.roles.everyone.id) {
-                    console.log(`Reseting @everyone for #${channel.name}`);
-                    channel.updateOverwrite(server.roles.everyone, {
+                    //console.log(`Reseting @everyone for #${channel.name}`);
+                    /*channel.updateOverwrite(server.roles.everyone, {
                         SEND_MESSAGES: true
-                    });
+                    });*/
                 }
             });
 
