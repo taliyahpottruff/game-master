@@ -50,7 +50,6 @@ bot.on('message', async msg=>{
             if (command == 'start') {
                 //Start a game if none is active in this channel
                 if (gameIndex >= 0) { //Game already exists in this channel
-                    //msg.author.send("A game already exists there silly goose.")
                     //Do nothing because Lumi is forcing me not to send DMs
                 } else { //No game exist right now, go ahead and create
                     if (parts.length < 2) {
@@ -136,30 +135,7 @@ bot.on('message', async msg=>{
                         console.log(reason);
                     });
                 }
-            } /* else if (command == 'in' || command == 'join') { //Deprecated
-                //Join the current game active in the channel if available
-                if (gameIndex >= 0) { //There is a game to join
-                    if (game.day > 0) { //Game is already in progress
-                        msg.reply('the game you are trying to join is already in progress...');
-                    } else { //Game is in signup phase
-                        var player = {
-                            id: msg.author.id,
-                            name: msg.guild.member(msg.author).displayName,
-                            alive: true
-                        };
-                        if (!game.players.find(player => player.id == msg.author.id)) {
-                            game.players.push(player);
-                            msg.member.roles.add(game.cache.playerRole);
-                            msg.reply(`You have joined the game!`);
-                            db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(console.log).catch(console.error);
-                        } else {
-                            console.log(`${msg.author.username} is trying to double join!`);
-                        }
-                    }
-                } else { //No game to join
-                    msg.reply("Sorry brudda, there is no game running right now.");
-                }
-            } */ else if (command == 'lynch') {
+            } else if (command == 'lynch') {
                 //Vote to lynch a play if available
             } else if (command == 'playerlist') {
                 //List all of the player; format to game
@@ -171,8 +147,11 @@ bot.on('message', async msg=>{
                     msg.channel.send(liststring);
                 }
             } else if (command == 'forcestop') {
+                console.log(`~ Force stop game ${gameIndex}`);
                 if (gameIndex >= 0) { //Ensure a game is running here
                     forceStop(msg, game, gameIndex, parts.length > 1);
+                } else {
+                    console.log(activeGames);
                 }
             }
         }
@@ -256,7 +235,7 @@ async function endGame(gameIndex, deleteChannels) {
             game.cache.playerRole.delete('Game ended');
             game.cache.gmRole.delete('Game ended');
 
-            activeGames.splice(gameIndex);
+            activeGames.splice(gameIndex, 1);
 
             //Delete channels if applicable
             if (deleteChannels) {
@@ -334,7 +313,7 @@ gameLoop.unref();
 // FINAL: START BOT PROCESSES
 //Log in the bot
 bot.login(token).then((value) => {
-    console.log("Game Master is now online!");
+    console.log("~ Game Master is now online!");
     MongoClient.connect(db_url, {useUnifiedTopology: true}, async (err, client) => {
         assert.equal(null, err);
         console.log('~ DATABASE CONNECTION: SUCCESS');
@@ -349,19 +328,8 @@ bot.login(token).then((value) => {
             const gameObj = await databaseUtils.deserializeGame(gameArray[i], bot);
             activeGames.push(gameObj);
         }
-        console.log(`Finished pulling games!`);
+        console.log(`~ Finished pulling games!`);
         console.log(activeGames);
         ready = true;
-        /*db_col_games.find().forEach((doc) => {
-            const game = databaseUtils.deserializeGame(doc, bot);
-            console.log(game);
-            activeGames.push(game);
-        }, (err) => {
-            if (err) console.log(err);
-            
-            console.log(`Finished pulling games!`);
-            console.log(activeGames);
-            ready = true;
-        });*/
     });
 }).catch(console.error);
