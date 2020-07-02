@@ -249,11 +249,6 @@ async function endGame(gameIndex, deleteChannels) {
                 if (key == playerRole.id || key == gmRole.id) {
                     console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
                     channel.permissionOverwrites.delete(key);
-                } else if (key == server.roles.everyone.id) {
-                    //console.log(`Reseting @everyone for #${channel.name}`);
-                    /*channel.updateOverwrite(server.roles.everyone, {
-                        SEND_MESSAGES: true
-                    });*/
                 }
             });
 
@@ -315,23 +310,20 @@ const gameLoop = setInterval(() => {
                         game.night = false;
                         channel.updateOverwrite(game.cache.playerRole, {
                             SEND_MESSAGES: true
-                        });
+                        }).catch(console.error);
                     } else {
                         game.night = true;
                         channel.updateOverwrite(game.cache.playerRole, {
                             SEND_MESSAGES: false
-                        });
+                        }).catch(console.error);
                     }
                     game.votes = [];
-                    bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have ${game.lengthOfDays} seconds to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`}`);
+                    bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have ${game.lengthOfDays} seconds to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`}`).catch(console.error);
                 } else {
                     //Start the game
                     var channel = bot.guilds.resolve(game.server).channels.resolve(game.channel);
-                    channel.updateOverwrite(channel.guild.roles.everyone, {
-                        SEND_MESSAGES: false
-                    });
                     game.day = 1;
-                    channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`);
+                    channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`).catch(console.error);
                 }
             }
         }
