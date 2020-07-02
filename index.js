@@ -51,12 +51,21 @@ bot.on('message', async msg=>{
                     //msg.author.send("A game already exists there silly goose.")
                     //Do nothing because Lumi is forcing me not to send DMs
                 } else { //No game exist right now, go ahead and create
+                    if (parts.length < 2) {
+                        return msg.reply('please specify a game name!');
+                    }
+
+                    const firstSpace = msg.content.indexOf(' ');
+                    const gameName = msg.content.slice(firstSpace+1);
+
+                    console.log(`Creating "${gameName}" in #${msg.channel.name}:`);
+
                     var newGame = {
                         type: "Mafia",
                         gm: msg.author.id,
                         server: msg.guild.id,
                         channel: msg.channel.id,
-                        name: msg.channel.name,
+                        name: gameName,
                         currentMessage: null,
                         cache: {
                             playerRole: null,
@@ -99,7 +108,6 @@ bot.on('message', async msg=>{
                             //Let everyone know
                             msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nType \`${prefix}in\` to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft.diff(moment(), 'seconds') / 60 - 1))).then(message => {
                                 newGame.currentMessage = message;
-                                console.log(newGame);
                                 const serializedGame = databaseUtils.serializeGame(newGame);
                                 console.log(serializedGame);
                             
