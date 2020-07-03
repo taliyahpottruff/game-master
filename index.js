@@ -85,7 +85,7 @@ bot.on('message', async msg=>{
 
                     //Create player role
                     msg.guild.roles.create({
-                        data: {name: `${gamePrefix}-player`},
+                        data: {name: `${gamePrefix}-player`, permissions: new Discord.Permissions(104188992)},
                         reason: `For the game started by ${msg.author.username}` 
                     }).then((playerRole) => {
                         //Give player role the proper permissions
@@ -96,7 +96,7 @@ bot.on('message', async msg=>{
 
                         //Create the GM role
                         msg.guild.roles.create({
-                            data: {name: `${gamePrefix}-gm`},
+                            data: {name: `${gamePrefix}-gm`, permissions: new Discord.Permissions(104188992)},
                             reason: `For the game started by ${msg.author.username}`
                         }).then((gmRole) => {
                             //Give GM role proper permissions
@@ -299,6 +299,10 @@ const gameLoop = setInterval(() => {
                     game.votes = [];
                     bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have ${game.lengthOfDays} seconds to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`}`).catch(console.error);
                 } else {
+                    //Inform that signups have ended
+                    activeGames[i].currentMessage.edit(new Discord.MessageEmbed()
+                        .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nReact with 👍 to join this fun game!`)
+                        .addField('Time Left', `This game is in progress!`));
                     //Start the game
                     var channel = bot.guilds.resolve(game.server).channels.resolve(game.channel);
                     game.day = 1;
