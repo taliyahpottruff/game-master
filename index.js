@@ -315,21 +315,25 @@ gameLoop.unref();
 bot.login(token).then((value) => {
     console.log("~ Game Master is now online!");
     MongoClient.connect(db_url, {useUnifiedTopology: true}, async (err, client) => {
-        assert.equal(null, err);
-        console.log('~ DATABASE CONNECTION: SUCCESS');
+        try {
+            assert.equal(null, err);
+            console.log('~ DATABASE CONNECTION: SUCCESS');
 
-        db = client.db(db_name);
+            db = client.db(db_name);
 
-        //Fetch info from DB
-        activeGames = [];
-        db_col_games = db.collection('games');
-        const gameArray = await db_col_games.find().toArray();
-        for (var i = 0; i < gameArray.length; i++) {
-            const gameObj = await databaseUtils.deserializeGame(gameArray[i], bot);
-            activeGames.push(gameObj);
+            //Fetch info from DB
+            activeGames = [];
+            db_col_games = db.collection('games');
+            const gameArray = await db_col_games.find().toArray();
+            for (var i = 0; i < gameArray.length; i++) {
+                const gameObj = await databaseUtils.deserializeGame(gameArray[i], bot);
+                activeGames.push(gameObj);
+            }
+            console.log(`~ Finished pulling games!`);
+            console.log(activeGames);
+            ready = true;
+        } catch (err) {
+            console.error(err);
         }
-        console.log(`~ Finished pulling games!`);
-        console.log(activeGames);
-        ready = true;
     });
 }).catch(console.error);
