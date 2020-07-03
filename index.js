@@ -69,6 +69,12 @@ bot.on('message', async msg=>{
                         gm: msg.author.id,
                         server: msg.guild.id,
                         channel: channels.primaryChannel.id,
+                        channels: {
+                            infoBoard: channels.infoBoard.id,
+                            scumChats: channels.scumChats.map(channel => channel.id),
+                            nightTalk: channels.nightTalk.map(channel => channel.id),
+                            deadChat: channels.deadChat.id
+                        },
                         name: gameName,
                         currentMessage: null,
                         cache: {
