@@ -62,7 +62,7 @@ bot.on('message', async msg=>{
 
                     console.log(`~ Creating "${gameName}" in #${gamePrefix}:`);
 
-                    const channels = await manager.initializeChannels(msg.guild, msg.channel.parent, gamePrefix);
+                    const channels = await manager.initializeChannels(msg.guild, msg.channel.parent, gamePrefix, bot);
 
                     var newGame = {
                         type: "Mafia",
@@ -110,6 +110,19 @@ bot.on('message', async msg=>{
                             channels.primaryChannel.updateOverwrite(gmRole, {
                                 SEND_MESSAGES: true
                             }).catch(console.error);
+                            channels.scumChats.forEach(channel => {
+                                console.log(channel.name);
+                                channel.updateOverwrite(gmRole, {
+                                    VIEW_CHANNEL: true,
+                                    SEND_MESSAGES: true
+                                });
+                            });
+                            channels.nightTalk.forEach(channel => {
+                                channel.updateOverwrite(gmRole, {
+                                    VIEW_CHANNEL: true,
+                                    SEND_MESSAGES: true
+                                });
+                            });
             
                             //Add GM role to GM
                             msg.member.roles.add(gmRole);
@@ -246,6 +259,14 @@ async function endGame(gameIndex, deleteChannels) {
             //Delete channels if applicable
             if (deleteChannels) {
                 channel.delete(`GM wanted game to be deleted.`);
+                server.channels.resolve(game.channels.infoBoard).delete();
+                server.channels.resolve(game.channels.deadChat).delete();
+                game.channels.scumChats.forEach(channel => {
+                    server.channels.resolve(channel).delete();
+                });
+                game.channels.nightTalk.forEach(channel => {
+                    server.channels.resolve(channel).delete();
+                });
             }
 
             success = true;

@@ -1,4 +1,4 @@
-const initializeChannels = async (server, category, prefix) => {
+const initializeChannels = async (server, category, prefix, bot) => {
     //Create the primary channel
     const primaryChannel = await server.channels.create(prefix, {
         parent: category,
@@ -17,14 +17,16 @@ const initializeChannels = async (server, category, prefix) => {
     const scumChat = await server.channels.create(`${prefix}-scumchat`, {
         parent: category,
         permissionOverwrites: [
-            {id: server.roles.everyone, deny: "VIEW_CHANNEL"}
+            {id: server.roles.everyone, deny: "VIEW_CHANNEL"},
+            {id: bot.user.id, allow: "VIEW_CHANNEL"}
         ]
     });
 
     const deadChat = await server.channels.create(`${prefix}-deadchat`, {
         parent: category,
         permissionOverwrites: [
-            {id: server.roles.everyone, deny: "VIEW_CHANNEL"}
+            {id: server.roles.everyone, deny: "VIEW_CHANNEL"},
+            {id: bot.user.id, allow: "VIEW_CHANNEL"}
         ]
     });
 
