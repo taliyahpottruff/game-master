@@ -320,18 +320,16 @@ function lynchTally(channel, game) {
         const lyncheeName = game.players.find(player => player.id == vote.lynchee);
 
         var obj = (votes.has(lyncheeName)) ? votes.get(lyncheeName) : [];
-        console.log(obj);
         obj.push(lyncherName);
         votes.set(lyncheeName, obj);
     });
-    //console.log(votes);
     votes.forEach((vote, key) => {
         var lynchers = '';
         for (var i = 0; i < vote.length; i++) {
             if (i > 0) lynchers += ', ';
             lynchers += vote[i].name;
         }
-        output += `\n${key.name} - ${lynchers}`;
+        output += `\n${key.name} (${vote.length}) - ${lynchers}`;
     });
     channel.send(output);
 }
