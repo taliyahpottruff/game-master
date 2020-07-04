@@ -81,7 +81,7 @@ bot.on('message', async msg=>{
                             playerRole: null,
                             gmRole: null
                         },
-                        lengthOfDays: 30,
+                        lengthOfDays: 36000,
                         timeLeft: moment().add(30, 'seconds'),
                         day: 0,
                         night: false,
@@ -156,6 +156,22 @@ bot.on('message', async msg=>{
                 }
             } else if (command == 'lynch') {
                 //Vote to lynch a play if available
+                if (gameIndex >= 0) {
+                    if (mentions.length > 0) {
+                        if (!game.night) {
+                            const lynchee = msg.guild.member(mentions[0]);
+                            game.votes.push({
+                                lyncher: msg.author.id,
+                                lynchee: lynchee.id
+                            });
+                            lynchTally(msg.channel, game);
+                        }
+                    } else {
+                        msg.reply(`please @mention the person you are trying to lynch in your command!`);
+                    }
+                } else {
+                    console.log(`~ ${msg.author.username} is trying to lynch in the wrong channel.`);
+                }
             } else if (command == 'playerlist') {
                 //List all of the player; format to game
                 if (gameIndex >= 0) {
@@ -288,6 +304,39 @@ function matchSignupMessage(message) {
     return activeGames.find(game => game.currentMessage == message);
 }
 
+function votesToLynch(game) {
+    var aliveCount = 0;
+    game.players.forEach(player => {
+        if (player.alive) aliveCount++;
+    });
+    return Math.round((aliveCount + 1) / 2);
+}
+
+function lynchTally(channel, game) {
+    var output = `Current tally (${votesToLynch(game)} to hammer):`;
+    var votes = new Map();
+    game.votes.forEach(vote => {
+        const lyncherName = game.players.find(player => player.id == vote.lyncher);
+        const lyncheeName = game.players.find(player => player.id == vote.lynchee);
+
+        var obj = (votes.has(lyncheeName)) ? votes.get(lyncheeName) : [];
+        console.log(obj);
+        obj.push(lyncherName);
+        votes.set(lyncheeName, obj);
+    });
+    //console.log(votes);
+    votes.forEach((vote, key) => {
+        var lynchers = '';
+        for (var i = 0; i < vote.length; i++) {
+            if (i > 0) lynchers += ', ';
+            lynchers += vote[i].name;
+        }
+        output += `\n${key.name} - ${lynchers}`;
+    });
+    channel.send(output);
+}
+
+// Game loop
 const gameLoop = setInterval(() => {
     //Tick
     for (var i = 0; i < activeGames.length; i++) {
@@ -324,7 +373,7 @@ const gameLoop = setInterval(() => {
                         }).catch(console.error);
                     }
                     game.votes = [];
-                    bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have ${game.lengthOfDays} seconds to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`}`).catch(console.error);
+                    bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have ${game.lengthOfDays} seconds to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${votesToLynch(game)} votes needed to hammer.*`}`).catch(console.error);
                 } else {
                     //Inform that signups have ended
                     activeGames[i].currentMessage.edit(new Discord.MessageEmbed()
@@ -333,7 +382,7 @@ const gameLoop = setInterval(() => {
                     //Start the game
                     var channel = bot.guilds.resolve(game.server).channels.resolve(game.channel);
                     game.day = 1;
-                    channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.`).catch(console.error);
+                    channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${votesToLynch(game)} votes needed to hammer.*`).catch(console.error);
                 }
             }
         }

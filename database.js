@@ -6,6 +6,12 @@ const serializeGame = (game) => {
         gm: game.gm,
         server: game.server,
         channel: game.channel,
+        channels: {
+            infoBoard: game.channels.infoBoard,
+            scumChats: game.channels.scumChats,
+            nightTalk: game.channels.nightTalk,
+            deadChat: game.channels.deadChat
+        },
         name: game.name,
         currentMessage: `${game.currentMessage.channel.id}/${game.currentMessage.id}`,
         cache: {
@@ -16,7 +22,7 @@ const serializeGame = (game) => {
         timeLeft: game.timeLeft.toDate(),
         day: game.day,
         night: game.night,
-        players: [],
+        players: game.players,
         votes: []
     };
     return obj;
@@ -33,6 +39,12 @@ const deserializeGame = async (game, bot) => {
         gm: game.gm,
         server: game.server,
         channel: game.channel,
+        channels: {
+            infoBoard: game.channels.infoBoard,
+            scumChats: game.channels.scumChats,
+            nightTalk: game.channels.nightTalk,
+            deadChat: game.channels.deadChat
+        },
         name: game.name,
         currentMessage: await server.channels.resolve(game.currentMessage.split('/')[0]).messages.fetch(game.currentMessage.split('/')[1]),
         cache: {
@@ -43,7 +55,7 @@ const deserializeGame = async (game, bot) => {
         timeLeft: moment(game.timeLeft),
         day: game.day,
         night: game.night,
-        players: [],
+        players: game.players,
         votes: []
     };
 
