@@ -188,6 +188,10 @@ bot.on('message', async msg=>{
                 } else {
                     console.log(activeGames);
                 }
+            } else if (command == 'tally' || command == 'lynchtally') {
+                if (gameIndex >= 0) {
+                    lynchTally(msg.channel, game);
+                }
             }
         }
     }
