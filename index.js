@@ -160,11 +160,17 @@ bot.on('message', async msg=>{
                     if (mentions.length > 0) {
                         if (!game.night) {
                             const lynchee = msg.guild.member(mentions[0]);
-                            game.votes.push({
-                                lyncher: msg.author.id,
-                                lynchee: lynchee.id
-                            });
-                            lynchTally(msg.channel, game);
+                            var existingVote = game.votes.findIndex(vote => vote.lyncher == msg.author.id);
+                            if (existingVote < 0) {
+                                game.votes.push({
+                                    lyncher: msg.author.id,
+                                    lynchee: lynchee.id
+                                });
+                                lynchTally(msg.channel, game);
+                            } else if (existingVote >= 0 && game.votes[existingVote].lynchee != lynchee.id) {
+                                game.votes[existingVote].lynchee = lynchee.id;
+                                lynchTally(msg.channel, game);
+                            }
                         }
                     } else {
                         msg.reply(`please @mention the person you are trying to lynch in your command!`);
@@ -182,9 +188,14 @@ bot.on('message', async msg=>{
                     msg.channel.send(liststring);
                 }
             } else if (command == 'forcestop') {
-                console.log(`~ Force stop game ${gameIndex}`);
                 if (gameIndex >= 0) { //Ensure a game is running here
-                    forceStop(msg, game, gameIndex, parts.length > 1);
+                    forceStop(msg, game, gameIndex, false);
+                } else {
+                    console.log(activeGames);
+                }
+            } else if (command == 'delete') {
+                if (gameIndex >= 0) { //Ensure a game is running here
+                    forceStop(msg, game, gameIndex, true);
                 } else {
                     console.log(activeGames);
                 }
@@ -265,10 +276,14 @@ async function endGame(gameIndex, deleteChannels) {
 
                 //Reset perms
                 channel.permissionOverwrites.forEach((value, key) => {
-                    if (key == playerRole.id || key == gmRole.id) {
-                        console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
-                        channel.permissionOverwrites.delete(key);
-                    }
+                    try {
+                        if (key == playerRole.id || key == gmRole.id) {
+                            console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
+                            channel.permissionOverwrites.delete(key);
+                        }
+                    } catch (prom) {
+                        console.error(prom);
+                    } 
                 });
 
                 //Delete game roles
