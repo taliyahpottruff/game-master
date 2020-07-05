@@ -360,6 +360,7 @@ function lynchTally(channel, game) {
     });
     if (hammered) {
         channel.send(`${hammered.name} has been lynched!`);
+        manager.nextPhase(channel, prefix, game, bot);
     } else { 
         channel.send(output);
     }
