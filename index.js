@@ -253,43 +253,47 @@ async function endGame(gameIndex, deleteChannels) {
 
     //Finally remove game from active
     await db_col_games.deleteOne({_id: game._id}).then(result => {
-        if (result.deletedCount > 0) {
-            //Remove roles
-            for (var i = 0; i < game.players.length; i++) {
-                server.member(game.players[i].id).roles.remove(playerRole);
+        try {
+            if (result.deletedCount > 0) {
+                //Remove roles
+                for (var i = 0; i < game.players.length; i++) {
+                    server.member(game.players[i].id).roles.remove(playerRole);
 
-                if (game.players[i] == game.gm) //Remove GM
-                    server.member(game.players[i]).roles.remove(gmRole);
-            }
-
-            //Reset perms
-            channel.permissionOverwrites.forEach((value, key) => {
-                if (key == playerRole.id || key == gmRole.id) {
-                    console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
-                    channel.permissionOverwrites.delete(key);
+                    if (game.players[i] == game.gm) //Remove GM
+                        server.member(game.players[i]).roles.remove(gmRole);
                 }
-            });
 
-            //Delete game roles
-            game.cache.playerRole.delete('Game ended');
-            game.cache.gmRole.delete('Game ended');
-
-            activeGames.splice(gameIndex, 1);
-
-            //Delete channels if applicable
-            if (deleteChannels) {
-                channel.delete(`GM wanted game to be deleted.`);
-                server.channels.resolve(game.channels.infoBoard).delete();
-                server.channels.resolve(game.channels.deadChat).delete();
-                game.channels.scumChats.forEach(channel => {
-                    server.channels.resolve(channel).delete();
+                //Reset perms
+                channel.permissionOverwrites.forEach((value, key) => {
+                    if (key == playerRole.id || key == gmRole.id) {
+                        console.log(`Removing role '${(key == playerRole.id) ? playerRole.name : gmRole.name}' from #${channel.name}`);
+                        channel.permissionOverwrites.delete(key);
+                    }
                 });
-                game.channels.nightTalk.forEach(channel => {
-                    server.channels.resolve(channel).delete();
-                });
+
+                //Delete game roles
+                game.cache.playerRole.delete('Game ended');
+                game.cache.gmRole.delete('Game ended');
+
+                activeGames.splice(gameIndex, 1);
+
+                //Delete channels if applicable
+                if (deleteChannels) {
+                    channel.delete(`GM wanted game to be deleted.`);
+                    server.channels.resolve(game.channels.infoBoard).delete();
+                    server.channels.resolve(game.channels.deadChat).delete();
+                    game.channels.scumChats.forEach(channel => {
+                        server.channels.resolve(channel).delete();
+                    });
+                    game.channels.nightTalk.forEach(channel => {
+                        server.channels.resolve(channel).delete();
+                    });
+                }
+
+                success = true;
             }
-
-            success = true;
+        } catch (err) {
+            console.error(err);
         }
     }).catch(console.error);
 
