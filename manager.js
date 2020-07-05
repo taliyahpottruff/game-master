@@ -1,3 +1,5 @@
+const utils = require('./utils');
+
 const initializeChannels = async (server, category, prefix, bot) => {
     //Create the primary channel
     const primaryChannel = await server.channels.create(prefix, {
@@ -33,3 +35,32 @@ const initializeChannels = async (server, category, prefix, bot) => {
     return {primaryChannel, infoBoard, scumChats: [scumChat], nightTalk: [], deadChat};
 };
 exports.initializeChannels = initializeChannels;
+
+const nextPhase = (channel, prefix, game, bot) => {
+    if (game.night) {
+        game.day++;
+        game.night = false;
+        channel.updateOverwrite(game.cache.playerRole, {
+            SEND_MESSAGES: true
+        }).catch(console.error);
+    } else {
+        game.night = true;
+        channel.updateOverwrite(game.cache.playerRole, {
+            SEND_MESSAGES: false
+        }).catch(console.error);
+    }
+    game.votes = [];
+    bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have ${game.lengthOfDays} seconds to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`}`).catch(console.error);
+};
+exports.nextPhase = nextPhase;
+
+exports.killPlayer = (game, player) => {
+    const playerIndex = game.players.findIndex(value => value.id == player);
+    if (playerIndex >= 0) {
+        let playerObj = game.players[playerIndex];
+        playerObj.alive = false;
+        game.players[playerIndex] = playerObj;
+        return true;
+    }
+    return false;
+};
