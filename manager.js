@@ -54,12 +54,13 @@ const nextPhase = (channel, prefix, game, bot) => {
 };
 exports.nextPhase = nextPhase;
 
-exports.killPlayer = (game, player) => {
+exports.killPlayer = (game, player, db) => {
     const playerIndex = game.players.findIndex(value => value.id == player);
     if (playerIndex >= 0) {
         let playerObj = game.players[playerIndex];
         playerObj.alive = false;
         game.players[playerIndex] = playerObj;
+        db.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
         return true;
     }
     return false;

@@ -347,7 +347,7 @@ function lynchTally(channel, game) {
     votes.forEach((vote, key) => {
         if (vote.length >= hammerNumber) {
             hammered = key;
-            manager.killPlayer(game, key.id);
+            manager.killPlayer(game, key.id, db_col_games);
             return '';
         }
 
