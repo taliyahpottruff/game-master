@@ -19,7 +19,7 @@ const initializeChannels = async (server, category, prefix, bot) => {
     const scumChat = await server.channels.create(`${prefix}-scumchat`, {
         parent: category,
         permissionOverwrites: [
-            {id: server.roles.everyone, deny: "VIEW_CHANNEL"},
+            {id: server.roles.everyone, deny: ["VIEW_CHANNEL", "SEND_MESSAGES"]},
             {id: bot.user.id, allow: "VIEW_CHANNEL"}
         ]
     });
@@ -27,7 +27,7 @@ const initializeChannels = async (server, category, prefix, bot) => {
     const deadChat = await server.channels.create(`${prefix}-deadchat`, {
         parent: category,
         permissionOverwrites: [
-            {id: server.roles.everyone, deny: "VIEW_CHANNEL"},
+            {id: server.roles.everyone, deny: ["VIEW_CHANNEL", "SEND_MESSAGES"]},
             {id: bot.user.id, allow: "VIEW_CHANNEL"}
         ]
     });
@@ -43,11 +43,35 @@ const nextPhase = (channel, prefix, game, bot) => {
         channel.updateOverwrite(game.cache.playerRole, {
             SEND_MESSAGES: true
         }).catch(console.error);
+        game.channels.scumChats.forEach(sc => {
+            chat = channel.guild.channels.resolve(sc);
+            chat.updateOverwrite(channel.guild.roles.everyone, {
+                SEND_MESSAGES: false
+            });
+        });
+        game.channels.nightTalk.forEach(nt => {
+            chat = channel.guild.channels.resolve(nt);
+            chat.updateOverwrite(channel.guild.roles.everyone, {
+                SEND_MESSAGES: false
+            });
+        });
     } else {
         game.night = true;
         channel.updateOverwrite(game.cache.playerRole, {
             SEND_MESSAGES: false
         }).catch(console.error);
+        game.channels.scumChats.forEach(sc => {
+            chat = channel.guild.channels.resolve(sc);
+            chat.updateOverwrite(channel.guild.roles.everyone, {
+                SEND_MESSAGES: true
+            });
+        });
+        game.channels.nightTalk.forEach(nt => {
+            chat = channel.guild.channels.resolve(sc);
+            chat.updateOverwrite(channel.guild.roles.everyone, {
+                SEND_MESSAGES: true
+            });
+        });
     }
     game.votes = [];
     bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have ${game.lengthOfDays} seconds to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`}`).catch(console.error);
