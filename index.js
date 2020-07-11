@@ -1,4 +1,5 @@
-/// Base skeleton code by Danny (Lumpy)
+/// Developed by Trenton Pottruff
+/// Base skeleton code by Lumpy
 
 const dotenv = require('dotenv');
 dotenv.config();
