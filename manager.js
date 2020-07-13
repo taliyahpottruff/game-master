@@ -78,12 +78,13 @@ const nextPhase = (channel, prefix, game, bot) => {
 };
 exports.nextPhase = nextPhase;
 
-exports.killPlayer = (game, player, db) => {
+exports.killPlayer = (game, player, db, server) => {
     const playerIndex = game.players.findIndex(value => value.id == player);
     if (playerIndex >= 0) {
         let playerObj = game.players[playerIndex];
         playerObj.alive = false;
-        game.players[playerIndex] = playerObj;
+        game.players[playerIndex] = playerObj; //Reset in local game array
+        server.channels.resolve(game.channels.deadChat).updateOverwrite(player, {VIEW_CHANNEL: true, SEND_MESSAGES: true}); //Give deadchat perms
         db.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
         return true;
     }
