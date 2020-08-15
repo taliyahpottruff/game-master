@@ -182,9 +182,15 @@ bot.on('message', async msg=>{
             } else if (command == 'playerlist') {
                 //List all of the player; format to game
                 if (gameIndex >= 0) {
-                    var liststring = 'Player\'s currently alive:\n'
+                    activeGames[gameIndex].players.sort((a, b) => {
+                        if (a.alive && !b.alive) return -1;
+                        else if (!a.alive && b.alive) return 1;
+                        else return 0;
+                    });
+                    var liststring = 'Player\'s currently alive:\n';
+                    var deadStrike = (dead) => (dead) ? '' : '~~';
                     for (var i = 0; i < activeGames[gameIndex].players.length; i++) {
-                        liststring += `${activeGames[gameIndex].players[i].name}\n`;
+                        liststring += `${deadStrike(activeGames[gameIndex].players[i].alive)}${activeGames[gameIndex].players[i].name}${deadStrike(activeGames[gameIndex].players[i].alive)}\n`;
                     }
                     msg.channel.send(liststring);
                 }
