@@ -161,7 +161,7 @@ bot.on('message', async msg=>{
                     });
                 }
             } else if (command == 'lynch') {
-                //Vote to lynch a play if available
+                //Vote to lynch a player if available
                 if (gameIndex >= 0) {
                     if (mentions.length > 0) {
                         if (!game.night) {
@@ -265,6 +265,23 @@ bot.on('message', async msg=>{
                             break;
                         default:
                             console.log('Not a valid assignment...');
+                    }
+                }
+            } else if (command == 'kill') {
+                if (game) {
+                    //Make sure the person calling this is the GM && 
+                    if (msg.author.id == game.gm) {
+                        //Player to kill must be @ mentioned
+                        if (mentions.length > 0) {
+                            //TODO: Make sure the player is actually in the game before killing
+                            const playerToKill = msg.guild.member(mentions[0]);
+                            manager.killPlayer(game, playerToKill.id, db_col_games, msg.guild);
+                            
+                            //Make an announcement
+                            msg.guild.channels.resolve(game.channel).send(`**${playerToKill.displayName} has been killed!**`)
+                        } else {
+                            msg.channel.send(`You must @ mention the person you are trying to kill! Like so: /kill ${msg.author}`);
+                        }
                     }
                 }
             }
