@@ -302,7 +302,8 @@ bot.on('messageReactionAdd', async (messageReaction, user) => {
                     alive: true,
                     scum: false
                 };
-                if (!game.players.find(player => player.id == user.id)) {
+                //Make sure user isn't already playing and that they aren't the GM
+                if (!game.players.find(player => player.id == user.id) && game.gm != user.id) {
                     
                     messageReaction.message.guild.member(user).roles.add(game.cache.playerRole).then(user => {
                         game.players.push(player);
@@ -310,11 +311,11 @@ bot.on('messageReactionAdd', async (messageReaction, user) => {
                         db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
                     }).catch(console.error);
                 } else {
-                    console.log(`${user.username} is trying to double join!`);
+                    console.log(`~ ${user.username} can't join either because they are already in or they are the GM!`);
                 }
             }
         } else {
-            console.error('Unable to find game linked with message');
+            console.error('~ Unable to find game linked with message');
         }
     }
 });
