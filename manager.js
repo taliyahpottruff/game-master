@@ -2,6 +2,14 @@ const utils = require('./utils');
 
 const initializeChannels = async (server, category, prefix, bot) => {
     //Create the primary channel
+    const controlChannel = await server.channels.create(`${prefix}-control`, {
+        parent: category,
+        permissionOverwrites: [
+            {id: server.roles.everyone, deny: "VIEW_CHANNEL"},
+            {id: bot.user.id, allow: "VIEW_CHANNEL"}
+        ]
+    });
+
     const primaryChannel = await server.channels.create(prefix, {
         parent: category,
         permissionOverwrites: [
@@ -32,7 +40,7 @@ const initializeChannels = async (server, category, prefix, bot) => {
         ]
     });
 
-    return {primaryChannel, infoBoard, scumChats: [scumChat], nightTalk: [], deadChat};
+    return {controlChannel, primaryChannel, infoBoard, scumChats: [scumChat], nightTalk: [], deadChat};
 };
 exports.initializeChannels = initializeChannels;
 

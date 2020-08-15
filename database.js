@@ -7,6 +7,7 @@ const serializeGame = (game) => {
         server: game.server,
         channel: game.channel,
         channels: {
+            controlChannel: game.channels.controlChannel,
             infoBoard: game.channels.infoBoard,
             scumChats: game.channels.scumChats,
             nightTalk: game.channels.nightTalk,
@@ -40,6 +41,7 @@ const deserializeGame = async (game, bot) => {
         server: game.server,
         channel: game.channel,
         channels: {
+            controlChannel: game.channels.controlChannel,
             infoBoard: game.channels.infoBoard,
             scumChats: game.channels.scumChats,
             nightTalk: game.channels.nightTalk,

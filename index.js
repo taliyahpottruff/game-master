@@ -71,6 +71,7 @@ bot.on('message', async msg=>{
                         server: msg.guild.id,
                         channel: channels.primaryChannel.id,
                         channels: {
+                            controlChannel: channels.controlChannel.id,
                             infoBoard: channels.infoBoard.id,
                             scumChats: channels.scumChats.map(channel => channel.id),
                             nightTalk: channels.nightTalk.map(channel => channel.id),
@@ -108,6 +109,9 @@ bot.on('message', async msg=>{
                         }).then((gmRole) => {
                             //Give GM role proper permissions
                             newGame.cache.gmRole = gmRole;
+                            channels.controlChannel.updateOverwrite(gmRole, {
+                                VIEW_CHANNEL: true
+                            }).catch(console.error);
                             channels.primaryChannel.updateOverwrite(gmRole, {
                                 SEND_MESSAGES: true
                             }).catch(console.error);
@@ -314,6 +318,7 @@ async function endGame(gameIndex, deleteChannels) {
                     game.channels.nightTalk.forEach(channel => {
                         server.channels.resolve(channel).delete();
                     });
+                    server.channels.resolve(game.channels.controlChannel).delete();
                 }
 
                 success = true;
