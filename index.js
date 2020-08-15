@@ -36,7 +36,7 @@ var activeGames = [];
 bot.on('message', async msg=>{
     if (ready) {
         //Log message
-        if (gameExists(msg.guild.id, msg.author.id) > 1) {
+        if (gameExists(msg.guild.id, msg.channel.id) > 1) {
             console.log(`(${msg.guild.name})[#${msg.channel.name}] ${msg.author.tag}: ${msg.content}`);
         }
 
@@ -48,6 +48,7 @@ bot.on('message', async msg=>{
             var gameIndex = gameExists(msg.guild.id, msg.channel.id);
             var game = activeGames[gameIndex];
 
+            //TODO: Turn into a switch statement so I am not YandereDev, maybe an object and called commands[commandName]
             if (command == 'create') {
                 //Start a game if none is active in this channel
                 if (gameIndex >= 0) { //Game already exists in this channel
@@ -229,6 +230,43 @@ bot.on('message', async msg=>{
                         channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`).catch(console.error);
                     }
                 }
+            } else if (command == 'assign') {
+                if (parts.length > 1) {
+                    switch (parts[1]) {
+                        case 'scum':
+                            const prompt = new Discord.MessageEmbed().setDescription('Please respond with the ID of the player you\'d like to assign...');
+
+                            game.players.forEach(player => {
+                                prompt.addField(player.name, player.id);
+                            });
+                            msg.channel.send(prompt).then(promptMsg => {
+                                const scumCollector = msg.channel.createMessageCollector(m => !m.author.bot, {
+                                    time: 60000
+                                });
+
+                                scumCollector.on('collect', collected => {
+                                    //Check id against player list
+                                    const player = game.players.find(player => player.id == collected.content)
+                                    if (player) {
+                                        //Assign the scum role
+                                        player.scum = true;
+                                        msg.guild.channels.resolve(game.channels.scumChats[0]).updateOverwrite(player.id, {
+                                            VIEW_CHANNEL: true
+                                        }).then(() => {
+                                            scumCollector.stop('Player has been assigned');
+                                            msg.channel.send(`${player.name} is now scum!`);
+                                        }).catch(console.error);
+                                    } else {
+                                        //Finding failed, keep going
+                                        msg.reply('the ID that you provided doesn\'t seem to match any of the players in this game... Try again?')
+                                    }
+                                });
+                            }).catch(console.error);
+                            break;
+                        default:
+                            console.log('Not a valid assignment...');
+                    }
+                }
             }
         }
     }
@@ -244,7 +282,8 @@ bot.on('messageReactionAdd', async (messageReaction, user) => {
                 var player = {
                     id: user.id,
                     name: messageReaction.message.guild.member(user).displayName,
-                    alive: true
+                    alive: true,
+                    scum: false
                 };
                 if (!game.players.find(player => player.id == user.id)) {
                     
