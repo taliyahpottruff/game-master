@@ -199,16 +199,14 @@ bot.on('message', async msg=>{
                     msg.channel.send(liststring);
                 }
             } else if (command == 'forcestop') {
-                if (gameIndex >= 0) { //Ensure a game is running here
+                if (gameIndex >= 0 && msg.channel.id == game.channels.controlChannel) { //Ensure a game is running here
                     forceStop(msg, game, gameIndex, false);
-                } else {
-                    console.log(activeGames);
                 }
             } else if (command == 'delete') {
-                if (gameIndex >= 0) { //Ensure a game is running here
+                if (gameIndex >= 0 && msg.channel.id == game.channels.controlChannel) { //Ensure a game is running here
                     forceStop(msg, game, gameIndex, true);
                 } else {
-                    console.log(activeGames);
+                    console.log(`${msg.channel.id} == ${game.channels.controlChannel}`);
                 }
             } else if (command == 'tally' || command == 'lynchtally') {
                 if (gameIndex >= 0) {
@@ -332,7 +330,7 @@ async function endGame(gameIndex, deleteChannels) {
 }
 
 function gameExists(serverID, channelID) {
-    return activeGames.filter(game => game.server == serverID).findIndex(game => game.channel == channelID);
+    return activeGames.filter(game => game.server == serverID).findIndex(game => (game.channel == channelID) || (game.channels.controlChannel == channelID));
 }
 
 function formatMinutes(minutes) {
