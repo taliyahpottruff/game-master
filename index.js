@@ -48,7 +48,7 @@ bot.on('message', async msg=>{
             var gameIndex = gameExists(msg.guild.id, msg.channel.id);
             var game = activeGames[gameIndex];
 
-            if (command == 'start') {
+            if (command == 'create') {
                 //Start a game if none is active in this channel
                 if (gameIndex >= 0) { //Game already exists in this channel
                     //Do nothing because Lumi is forcing me not to send DMs
@@ -134,7 +134,7 @@ bot.on('message', async msg=>{
                             msg.guild.member(bot.user).roles.add(gmRole);
                             
                             //Let everyone know
-                            msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nReact with 👍 to join this fun game!`).addField('Time Left', formatMinutes(newGame.timeLeft.diff(moment(), 'seconds') / 60 - 1))).then(message => {
+                            msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nReact with 👍 to join this fun game!`).addField('Status', 'Signups in progress!')).then(message => {
                                 message.react('👍');
                                 
                                 newGame.currentMessage = message;
@@ -215,6 +215,19 @@ bot.on('message', async msg=>{
             } else if (command == 'next') {
                 if (game.gm == msg.author.id && game.day > 0) { //User is GM
                     manager.nextPhase(msg.channel, prefix, game, bot);
+                }
+            } else if (command == 'start') {
+                if (game) {
+                    if (msg.channel.id == game.channels.controlChannel && msg.author.id == game.gm && game.day < 1) {
+                        //Inform that signups have ended
+                        game.currentMessage.edit(new Discord.MessageEmbed()
+                            .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nReact with 👍 to join this fun game!`)
+                            .addField('Status', `This game is in progress!`));
+                        //Start the game
+                        var channel = bot.guilds.resolve(game.server).channels.resolve(game.channel);
+                        game.day = 1;
+                        channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`).catch(console.error);
+                    }
                 }
             }
         }
@@ -401,15 +414,6 @@ const gameLoop = setInterval(() => {
             if (game.type == "Mafia") {
                 if (game.day > 0) { //In game
                     manager.nextPhase(channel, prefix, game, bot);
-                } else {
-                    //Inform that signups have ended
-                    activeGames[i].currentMessage.edit(new Discord.MessageEmbed()
-                        .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nReact with 👍 to join this fun game!`)
-                        .addField('Time Left', `This game is in progress!`));
-                    //Start the game
-                    var channel = bot.guilds.resolve(game.server).channels.resolve(game.channel);
-                    game.day = 1;
-                    channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`).catch(console.error);
                 }
             }
         }
