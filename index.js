@@ -227,8 +227,10 @@ bot.on('message', async msg=>{
                     lynchTally(msg.channel, game);
                 }
             } else if (command == 'next') {
-                if (game.gm == msg.author.id && game.day > 0) { //User is GM
-                    manager.nextPhase(msg.channel, prefix, game, bot);
+                if (game) {
+                    if (game.gm == msg.author.id && game.day > 0) { //User is GM
+                        manager.nextPhase(msg.channel, prefix, game, bot);
+                    }
                 }
             } else if (command == 'start') {
                 if (game) {
