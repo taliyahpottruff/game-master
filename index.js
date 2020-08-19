@@ -187,16 +187,12 @@ bot.on('message', async msg=>{
             } else if (command == 'unlynch') {
                 //Vote to unlynch a player if a vote has been cast
                 if (gameIndex >= 0) {
-                    if (mentions.length > 0) {
-                        if (!game.night) {
-                            var existingVote = game.votes.findIndex(vote => vote.lyncher == msg.author.id);
-                            if (existingVote >= 0) {
-                                game.votes.splice(existingVote, 1);
-                                lynchTally(msg.channel, game);
-                            }
+                    if (!game.night) {
+                        var existingVote = game.votes.findIndex(vote => vote.lyncher == msg.author.id);
+                        if (existingVote >= 0) {
+                            game.votes.splice(existingVote, 1);
+                            lynchTally(msg.channel, game);
                         }
-                    } else {
-                        msg.reply(`please @mention the person you are trying to lynch in your command!`);
                     }
                 } else {
                     console.log(`~ ${msg.author.username} is trying to lynch in the wrong channel.`);
