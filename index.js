@@ -413,7 +413,7 @@ async function endGame(gameIndex, deleteChannels) {
 }
 
 function gameExists(serverID, channelID) {
-    return activeGames.filter(game => game.server == serverID).findIndex(game => (game.channel == channelID) || (game.channels.controlChannel == channelID));
+    return activeGames.findIndex(game => (game.channel === channelID.toString()) || (game.channels.controlChannel === channelID.toString()));
 }
 
 function formatMinutes(minutes) {
