@@ -335,6 +335,35 @@ bot.on('messageReactionAdd', async (messageReaction, user) => {
     }
 });
 
+bot.on('messageReactionRemove', async (messageReaction, user) => {
+    if (!user.bot && messageReaction._emoji.name == '👍') {
+        const game = matchSignupMessage(messageReaction.message);
+        if (game) {
+            if (game.day > 0) { //Game is already in progress
+                //msg.reply('the game you are trying to join is already in progress...');
+            } else { //Game is in signup phase
+                var player = {
+                    id: user.id,
+                    name: messageReaction.message.guild.member(user).displayName,
+                    alive: true,
+                    scum: false
+                };
+                //Make sure the player is playing
+                if (game.players.find(player => player.id == user.id)) {
+                    messageReaction.message.guild.member(user).roles.remove(game.cache.playerRole).then(user => {
+                        //game.players.push(player);
+                        game.players.splice(game.players.findIndex(p => player.id == p.id), 1);
+                        messageReaction.message.channel.send(`${user.toString()}, you have left the game!`);
+                        db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
+                    }).catch(console.error);
+                }
+            }
+        } else {
+            console.error('~ Unable to find game linked with message');
+        }
+    }
+});
+
 //Commands
 function forceStop(msg, game, gameIndex, deleteChannels) {
     if (game.gm == msg.author.id) { //User is gm
