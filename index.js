@@ -15,8 +15,8 @@ const moment = require('moment');
 const mongodb = require('mongodb');
 const MongoClient = mongodb.MongoClient;
 const assert = require('assert');
-const db_url = `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@ds135540.mlab.com:35540/game-master`;
-const db_name = 'game-master';
+const db_url = `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@ds${process.env.DB_NUMBER}.mlab.com:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+const db_name = process.env.DB_NAME;
 var db;
 var db_col_games;
 
@@ -128,6 +128,9 @@ bot.on('message', async msg=>{
                                     VIEW_CHANNEL: true,
                                     SEND_MESSAGES: true
                                 });
+                            });
+                            channels.deadChat.updateOverwrite(gmRole, {
+                                VIEW_CHANNEL: true
                             });
             
                             //Add GM role to GM
@@ -351,7 +354,6 @@ bot.on('messageReactionRemove', async (messageReaction, user) => {
                 //Make sure the player is playing
                 if (game.players.find(player => player.id == user.id)) {
                     messageReaction.message.guild.member(user).roles.remove(game.cache.playerRole).then(user => {
-                        //game.players.push(player);
                         game.players.splice(game.players.findIndex(p => player.id == p.id), 1);
                         messageReaction.message.channel.send(`${user.toString()}, you have left the game!`);
                         db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
