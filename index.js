@@ -175,9 +175,11 @@ bot.on('message', async msg=>{
                                     lyncher: msg.author.id,
                                     lynchee: lynchee.id
                                 });
+                                db_col_games.updateOne({_id: game._id}, {$set: {votes: game.votes}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
                                 lynchTally(msg.channel, game);
                             } else if (existingVote >= 0 && game.votes[existingVote].lynchee != lynchee.id) {
                                 game.votes[existingVote].lynchee = lynchee.id;
+                                db_col_games.updateOne({_id: game._id}, {$set: {votes: game.votes}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
                                 lynchTally(msg.channel, game);
                             }
                         }

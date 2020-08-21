@@ -24,7 +24,7 @@ const serializeGame = (game) => {
         day: game.day,
         night: game.night,
         players: game.players,
-        votes: []
+        votes: game.votes
     };
     return obj;
 };
@@ -58,7 +58,7 @@ const deserializeGame = async (game, bot) => {
         day: game.day,
         night: game.night,
         players: game.players,
-        votes: []
+        votes: game.votes
     };
 
     return obj;
