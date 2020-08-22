@@ -166,8 +166,10 @@ bot.on('message', async msg=>{
             } else if (command == 'lynch') {
                 //Vote to lynch a player if available
                 if (gameIndex >= 0) {
+                    // Check to make sure that a mention occurs
                     if (mentions.length > 0) {
-                        if (!game.night) {
+                        // Make sure the game isn't in night phase and that it's actually started
+                        if (!game.night && game.day > 0) {
                             const lynchee = msg.guild.member(mentions[0]);
                             var existingVote = game.votes.findIndex(vote => vote.lyncher == msg.author.id);
                             if (existingVote < 0) {
