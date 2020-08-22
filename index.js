@@ -235,6 +235,7 @@ bot.on('message', async msg=>{
                 if (game) {
                     if (game.gm == msg.author.id && game.day > 0) { //User is GM
                         manager.nextPhase(msg.channel, prefix, game, bot);
+                        db_col_games.updateOne({_id: game._id}, {$set: {day: game.day, night: game.night}}).then(result => console.log('~ Successfully updated day in DB!')).catch(console.error);
                     }
                 }
             } else if (command == 'start') {
@@ -489,6 +490,7 @@ function lynchTally(channel, game) {
     if (hammered) {
         channel.send(`${hammered.name} has been lynched!`);
         manager.nextPhase(channel, prefix, game, bot);
+        db_col_games.updateOne({_id: game._id}, {$set: {day: game.day, night: game.night}}).then(result => console.log('~ Successfully updated day in DB!')).catch(console.error);
     } else { 
         channel.send(output);
     }
@@ -519,6 +521,7 @@ const gameLoop = setInterval(() => {
             if (game.type == "Mafia") {
                 if (game.day > 0) { //In game
                     manager.nextPhase(channel, prefix, game, bot);
+                    db_col_games.updateOne({_id: game._id}, {$set: {day: game.day, night: game.night}}).then(result => console.log('~ Successfully updated day in DB!')).catch(console.error);
                 }
             }
         }
