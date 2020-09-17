@@ -308,7 +308,7 @@ bot.on('message', async msg=>{
                     }
                 }
             } else if (command == 'say' && msg.author.id == '98917980645109760') {
-                msg.channel.send(msg.content);
+                msg.channel.send(msg.content.replace('/say ', ''));
                 msg.delete();
             }
         }
