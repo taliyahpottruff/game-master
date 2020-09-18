@@ -40,7 +40,7 @@ bot.on('message', async msg=>{
 
         if (msg.channel.type == 'dm' && msg.author.id == '98917980645109760') {
             console.log(msg.content);
-            bot.guilds.resolve('676253496634245169').channels.resolve('676267315381141544').send(msg.content);
+            bot.guilds.resolve('676253496634245169').channels.resolve('676253496634245175').send(msg.content);
             return;
         }
 
