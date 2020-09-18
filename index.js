@@ -311,7 +311,7 @@ bot.on('message', async msg=>{
             
         }
 
-        if (msg.channel.type == 'dm' && msg.author.id == '98917980645109760') {
+        if (msg.channel.type == 'dm' && msg.channel.id == '98917980645109760') {
             console.log(msg.content);
             bot.guilds.resolve('676253496634245169').channels.resolve('676267315381141544').send(msg.content);
             msg.delete();
