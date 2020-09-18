@@ -307,13 +307,15 @@ bot.on('message', async msg=>{
                         }
                     }
                 }
-            } else if (command == 'say' && msg.author.id == '98917980645109760') {
-                msg.channel.send(msg.content.replace('/say ', ''));
+            } else if (msg.channel.type == 'dm' && msg.author.id == '98917980645109760') {
+                bot.guilds.resolve('676253496634245169').channels.resolve('676267315381141544').send(msg.content);
                 msg.delete();
             }
         }
     }
 });
+
+bot.on('mes')
 
 bot.on('messageReactionAdd', async (messageReaction, user) => {
     if (!user.bot && messageReaction._emoji.name == '👍') {
