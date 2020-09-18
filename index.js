@@ -35,6 +35,13 @@ var activeGames = [];
 
 bot.on('message', async msg=>{
     if (ready) {
+
+        if (msg.channel.type == 'dm' && msg.author.id == '98917980645109760') {
+            console.log(msg.content);
+            bot.guilds.resolve('676253496634245169').channels.resolve('676267315381141544').send(msg.content);
+            return;
+        }
+
         //Log message
         if (gameExists(msg.guild.id, msg.channel.id) > 1) {
             console.log(`(${msg.guild.name})[#${msg.channel.name}] ${msg.author.tag}: ${msg.content}`);
@@ -311,11 +318,7 @@ bot.on('message', async msg=>{
             
         }
 
-        if (msg.channel.type == 'dm' && msg.channel.id == '98917980645109760') {
-            console.log(msg.content);
-            bot.guilds.resolve('676253496634245169').channels.resolve('676267315381141544').send(msg.content);
-            msg.delete();
-        }
+        
     }
 });
 
