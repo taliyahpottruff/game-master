@@ -198,6 +198,7 @@ bot.on('message', async msg=>{
                         var existingVote = game.votes.findIndex(vote => vote.lyncher == msg.author.id);
                         if (existingVote >= 0) {
                             game.votes.splice(existingVote, 1);
+                            db_col_games.updateOne({_id: game._id}, {$set: {votes: game.votes}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
                             lynchTally(msg.channel, game);
                         }
                     }
@@ -520,7 +521,7 @@ const gameLoop = setInterval(() => {
         }
 
         //Game logic
-        if (timeLeft <= 0) { //Proceed with game logic
+        /*if (timeLeft <= 0) { //Proceed with game logic
             game.timeLeft = moment().add(game.lengthOfDays, 'seconds');
             
             if (game.type == "Mafia") {
@@ -529,7 +530,7 @@ const gameLoop = setInterval(() => {
                     db_col_games.updateOne({_id: game._id}, {$set: {day: game.day, night: game.night, timeLeft: game.timeLeft.toDate()}}).then(result => console.log('~ Successfully updated day in DB!')).catch(console.error);
                 }
             }
-        }
+        }*/
     }
 }, 1000);
 gameLoop.unref();
