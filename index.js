@@ -170,6 +170,10 @@ bot.on('message', async msg=>{
                     if (mentions.length > 0) {
                         // Make sure the game isn't in night phase and that it's actually started
                         if (!game.night && game.day > 0) {
+                            if (mentions[0].id == bot.user.id) {
+                                return msg.reply("stop trying to lynch me :eyes: I will genuinely end you...");
+                            }
+
                             const lynchee = msg.guild.member(mentions[0]);
                             var existingVote = game.votes.findIndex(vote => vote.lyncher == msg.author.id);
                             if (existingVote < 0) {
