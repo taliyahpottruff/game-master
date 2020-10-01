@@ -53,12 +53,14 @@ const nextPhase = (channel, prefix, game, bot) => {
         }).catch(console.error);
         game.channels.scumChats.forEach(sc => {
             chat = channel.guild.channels.resolve(sc);
+            if (!chat) return;
             chat.updateOverwrite(channel.guild.roles.everyone, {
                 SEND_MESSAGES: false
             });
         });
         game.channels.nightTalk.forEach(nt => {
             chat = channel.guild.channels.resolve(nt);
+            if (!chat) return;
             chat.updateOverwrite(channel.guild.roles.everyone, {
                 SEND_MESSAGES: false
             });
