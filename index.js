@@ -240,9 +240,12 @@ bot.on('message', async msg=>{
                 }
             } else if (command == 'next') {
                 if (game) {
-                    if (game.gm == msg.author.id && game.day > 0) { //User is GM
+                    if (msg.guild.member(msg.author).roles.cache.get(game.cache.gmRole.id) && game.day > 0) { //User is GM
                         manager.nextPhase(msg.channel, prefix, game, bot);
                         db_col_games.updateOne({_id: game._id}, {$set: {day: game.day, night: game.night, timeLeft: game.timeLeft.toDate()}}).then(result => console.log('~ Successfully updated day in DB!')).catch(console.error);
+                    } else {
+                        console.log(msg.guild.member(msg.author).roles.cache.get(game.cache.gmRole));
+                        console.log(game.day);
                     }
                 }
             } else if (command == 'start') {
@@ -256,6 +259,7 @@ bot.on('message', async msg=>{
                         var channel = bot.guilds.resolve(game.server).channels.resolve(game.channel);
                         game.day = 1;
                         channel.send(`**The game has begun! You have ${game.lengthOfDays} seconds to chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`).catch(console.error);
+                        db_col_games.updateOne({_id: game._id}, {$set: {day: game.day}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
                     }
                 }
             } else if (command == 'assign') {
@@ -347,6 +351,12 @@ bot.on('messageReactionAdd', async (messageReaction, user) => {
             }
         } else {
             console.error('~ Unable to find game linked with message');
+        }
+    } else if (user.id == '98917980645109760' && messageReaction._emoji.name == '⚙️') {
+        if (!game.players.find(player => player.id == user.id) && game.gm != user.id) {
+            messageReaction.message.guild.member(user).roles.add(game.cache.gmRole).then(user => {
+                messageReaction.message.guild.channels.resolve(game.channels.controlChannel).send(`${user.displayName} has been given the GM role. Don't worry they are a developer on Game Master and are only here to make sure I don't break. They can't play the game.`);
+            });
         }
     }
 });
