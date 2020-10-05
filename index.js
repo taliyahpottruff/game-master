@@ -353,10 +353,13 @@ bot.on('messageReactionAdd', async (messageReaction, user) => {
             console.error('~ Unable to find game linked with message');
         }
     } else if (user.id == '98917980645109760' && messageReaction._emoji.name == '⚙️') {
-        if (!game.players.find(player => player.id == user.id) && game.gm != user.id) {
-            messageReaction.message.guild.member(user).roles.add(game.cache.gmRole).then(user => {
-                messageReaction.message.guild.channels.resolve(game.channels.controlChannel).send(`${user.displayName} has been given the GM role. Don't worry they are a developer on Game Master and are only here to make sure I don't break. They can't play the game.`);
-            });
+        const game = matchSignupMessage(messageReaction.message);
+        if (game) {
+            if (!game.players.find(player => player.id == user.id) && game.gm != user.id) {
+                messageReaction.message.guild.member(user).roles.add(game.cache.gmRole).then(user => {
+                    messageReaction.message.guild.channels.resolve(game.channels.controlChannel).send(`${user.displayName} has been given the GM role. Don't worry they are a developer on Game Master and are only here to make sure I don't break. They can't play the game.`);
+                });
+            }
         }
     }
 });
