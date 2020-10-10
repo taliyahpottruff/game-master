@@ -327,14 +327,25 @@ bot.on('message', async msg=>{
                 ctrlChan.updateOverwrite(game.cache.gmRole, {
                     VIEW_CHANNEL: true,
                     SEND_MESSAGES: true
+                }).then(value => {
+                    console.log(value);
+                    msg.channel.send(`Set perms in Control Channel:\`\`\`${value}\`\`\``);
                 }).catch(console.error);
+
                 info.updateOverwrite(game.cache.gmRole, {
                     VIEW_CHANNEL: true,
                     SEND_MESSAGES: true
+                }).then(value => {
+                    console.log(value);
+                    msg.channel.send(`Set perms in Info Board:\`\`\`${value}\`\`\``);
                 }).catch(console.error);
+
                 dead.updateOverwrite(game.cache.gmRole, {
                     VIEW_CHANNEL: true,
                     SEND_MESSAGES: true
+                }).then(value => {
+                    console.log(value);
+                    msg.channel.send(`Set perms in Dead Chat:\`\`\`${value}\`\`\``);
                 }).catch(console.error);
             }
             
