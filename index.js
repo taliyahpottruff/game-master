@@ -319,6 +319,23 @@ bot.on('message', async msg=>{
                         }
                     }
                 }
+            } else if (command == 'resetgmperms' && user.id == '98917980645109760') {
+                const ctrlChan = msg.guild.channels.resolve(game.channels.controlChannel);
+                const info = msg.guild.channels.resolve(game.channels.infoBoard);
+                const dead = msg.guild.channels.resolve(game.channels.deadChat);
+
+                ctrlChan.updateOverwrite(game.cache.gmRole, {
+                    VIEW_CHANNEL: true,
+                    SEND_MESSAGES: true
+                }).catch(console.error);
+                info.updateOverwrite(game.cache.gmRole, {
+                    VIEW_CHANNEL: true,
+                    SEND_MESSAGES: true
+                }).catch(console.error);
+                dead.updateOverwrite(game.cache.gmRole, {
+                    VIEW_CHANNEL: true,
+                    SEND_MESSAGES: true
+                }).catch(console.error);
             }
             
         }
