@@ -329,7 +329,7 @@ bot.on('message', async msg=>{
                     SEND_MESSAGES: true
                 }).then(value => {
                     console.log(value);
-                    msg.channel.send(`Set perms in Control Channel:\`\`\`${value}\`\`\``);
+                    msg.channel.send(`Reset perms in ${value}`);
                 }).catch(console.error);
 
                 info.updateOverwrite(game.cache.gmRole, {
@@ -337,7 +337,7 @@ bot.on('message', async msg=>{
                     SEND_MESSAGES: true
                 }).then(value => {
                     console.log(value);
-                    msg.channel.send(`Set perms in Info Board:\`\`\`${value}\`\`\``);
+                    msg.channel.send(`Reset perms in ${value}`);
                 }).catch(console.error);
 
                 dead.updateOverwrite(game.cache.gmRole, {
@@ -345,7 +345,7 @@ bot.on('message', async msg=>{
                     SEND_MESSAGES: true
                 }).then(value => {
                     console.log(value);
-                    msg.channel.send(`Set perms in Dead Chat:\`\`\`${value}\`\`\``);
+                    msg.channel.send(`Reset perms in ${value}`);
                 }).catch(console.error);
             }
             
