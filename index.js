@@ -350,14 +350,14 @@ bot.on('message', async msg=>{
             } else if (command == 'allowchat') {
                 if (game && msg.channel.id == game.channels.controlChannel) { //Ensure a game is running here
                     const chan = msg.guild.channels.resolve(game.channel);
-                    chan.updateOverwrite(playerRole, {
+                    chan.updateOverwrite(game.cache.playerRole, {
                         SEND_MESSAGES: true
                     }).then(val => msg.reply('player chatting enabled')).catch(console.error);
                 }
             } else if (command == 'denychat') {
                 if (game && msg.channel.id == game.channels.controlChannel) { //Ensure a game is running here
                     const chan = msg.guild.channels.resolve(game.channel);
-                    chan.updateOverwrite(playerRole, {
+                    chan.updateOverwrite(game.cache.playerRole, {
                         SEND_MESSAGES: false
                     }).then(val => msg.reply('player chatting disabled')).catch(console.error);
                 }
