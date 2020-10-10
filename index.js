@@ -113,6 +113,9 @@ bot.on('message', async msg=>{
                             channels.controlChannel.updateOverwrite(gmRole, {
                                 VIEW_CHANNEL: true
                             }).catch(console.error);
+                            channels.infoBoard.updateOverwrite(gmRole, {
+                                SEND_MESSAGES: true
+                            }).catch(console.error);
                             channels.primaryChannel.updateOverwrite(gmRole, {
                                 SEND_MESSAGES: true
                             }).catch(console.error);
