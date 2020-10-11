@@ -29,6 +29,7 @@ var ready = false;
 const databaseUtils = require('./database');
 const utils = require('./utils');
 const manager = require('./manager');
+const reactionCollection = require('./collections/reactionCollection');
 
 //Game variables
 var activeGames = [];
@@ -269,13 +270,26 @@ bot.on('message', async msg=>{
                 if (parts.length > 1) {
                     switch (parts[1]) {
                         case 'scum':
-                            const prompt = new Discord.MessageEmbed().setDescription('Please respond with the ID of the player you\'d like to assign...');
+                            const prompt = new Discord.MessageEmbed().setDescription('Please react for which users you\'d like to assign as scum.\nReact with ❌ when you\'re done');
 
-                            game.players.forEach(player => {
-                                prompt.addField(player.name, player.id);
-                            });
-                            msg.channel.send(prompt).then(promptMsg => {
-                                const scumCollector = msg.channel.createMessageCollector(m => !m.author.bot, {
+                            for (let index = 0; index < game.players.length; index++) {
+                                const player = game.players[index];
+                                prompt.addField(player.name, reactionCollection.getReaction(index));
+                            }
+
+                            const getScumList = () => {
+                                let list = '';
+                                for (let index = 0; index < game.players.length; index++) {
+                                    const player = game.players[index];
+                                    if (player.scum) {
+                                        list += `${(index > 0) ? '\n' : ''}${player.name}`;
+                                    }
+                                }
+                                return list;
+                            };
+
+                            msg.channel.send(`Current scum:\n${getScumList()}`, prompt).then(promptMsg => {
+                                /*const scumCollector = msg.channel.createMessageCollector(m => !m.author.bot, {
                                     time: 60000
                                 });
 
@@ -295,6 +309,39 @@ bot.on('message', async msg=>{
                                         //Finding failed, keep going
                                         msg.reply('the ID that you provided doesn\'t seem to match any of the players in this game... Try again?')
                                     }
+                                });*/
+
+                                // Add reactions for each player
+                                for (let index = 0; index < game.players.length; index++) {
+                                    const player = game.players[index];
+                                    const reaction = reactionCollection.getReaction(index);
+                                    promptMsg.react(reaction);
+                                }
+                                promptMsg.react('❌');
+
+                                const scumCollector = promptMsg.createReactionCollector((reaction, user) => {
+                                    return !user.bot;
+                                }, {time: 60000});
+
+                                scumCollector.on('collect', (reaction, user) => {
+                                    if (reaction.emoji.name == '❌') {
+                                        return scumCollector.stop('Stop reaction given');
+                                    }
+
+                                    // Find and assign
+                                    const playerNum = reactionCollection.fetchIndex(reaction.emoji.name);
+                                    if (playerNum < game.players.length) {
+                                        game.players[playerNum].scum = true;
+                                        promptMsg.edit(`Current scum:\n${getScumList()}`);
+                                        db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
+                                    }
+                                });
+
+                                scumCollector.on('end', (collected, reason) => {
+                                    prompt.setDescription('Scum assignment completed.');
+                                    prompt.fields = [];
+                                    promptMsg.edit(`Current scum:\n${getScumList()}`, prompt);
+                                    promptMsg.reactions.removeAll();
                                 });
                             }).catch(console.error);
                             break;
