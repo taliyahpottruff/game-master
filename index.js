@@ -289,28 +289,6 @@ bot.on('message', async msg=>{
                             };
 
                             msg.channel.send(`Current scum:\n${getScumList()}`, prompt).then(promptMsg => {
-                                /*const scumCollector = msg.channel.createMessageCollector(m => !m.author.bot, {
-                                    time: 60000
-                                });
-
-                                scumCollector.on('collect', collected => {
-                                    //Check id against player list
-                                    const player = game.players.find(player => player.id == collected.content)
-                                    if (player) {
-                                        //Assign the scum role
-                                        player.scum = true;
-                                        msg.guild.channels.resolve(game.channels.scumChats[0]).updateOverwrite(player.id, {
-                                            VIEW_CHANNEL: true
-                                        }).then(() => {
-                                            scumCollector.stop('Player has been assigned');
-                                            msg.channel.send(`${player.name} is now scum!`);
-                                        }).catch(console.error);
-                                    } else {
-                                        //Finding failed, keep going
-                                        msg.reply('the ID that you provided doesn\'t seem to match any of the players in this game... Try again?')
-                                    }
-                                });*/
-
                                 // Add reactions for each player
                                 for (let index = 0; index < game.players.length; index++) {
                                     const player = game.players[index];
@@ -407,6 +385,13 @@ bot.on('message', async msg=>{
                     chan.updateOverwrite(game.cache.playerRole, {
                         SEND_MESSAGES: false
                     }).then(val => msg.reply('player chatting disabled')).catch(console.error);
+                }
+            } else if (command == 'clearscum') {
+                if (game && msg.channel.id == game.channels.controlChannel) {
+                    game.players.forEach(player => {
+                        player.scum = false;
+                    });
+                    db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
                 }
             }
             
