@@ -96,7 +96,11 @@ exports.killPlayer = (game, player, db, server) => {
         playerObj.alive = false;
         game.players[playerIndex] = playerObj; //Reset in local game array
         server.channels.resolve(game.channels.deadChat).updateOverwrite(player, {VIEW_CHANNEL: true, SEND_MESSAGES: true}); //Give deadchat perms
-        if (playerObj.scum) server.channels.resolve(game.channels.scumChats[0]).updateOverwrite(player, {SEND_MESSAGES: false}); //If scum, make sure they can't talk
+        if (playerObj.scum) {
+            game.channels.scumChats.forEach(scumChatId => {
+                server.channels.resolve(scumChatId).updateOverwrite(player, {SEND_MESSAGES: false}); //If scum, make sure they can't talk
+            });
+        }
         db.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
         return true;
     }

@@ -408,8 +408,25 @@ bot.on('message', async msg=>{
                         }).catch(console.error);
                     }
                 }
-            }
-            
+            } else if (command == 'scumchat') {
+                if (game && msg.channel.id == game.channels.controlChannel && parts.length > 1) {
+                    if (parts[1] == 'remove' || parts[1] == 'delete') {
+                        if (game.channels.scumChats.length > 0) {
+                            const chatNum = game.channels.scumChats.length;
+                            const scumchan = msg.guild.channels.resolve(game.channels.scumChats[chatNum - 1]);
+                            scumchan.delete('GM wanted the channel deleted.').then(() => {
+                                db_col_games.updateOne({_id: game._id}, {$set: {channels: game.channels}}).then(() => {
+                                    msg.reply(`Scum Chat #${chatNum} deleted!`);
+                                }).catch(console.error);
+                            }).catch((reason) => {
+                                msg.reply(`An error has occured: \`\`\`${reason}\`\`\``);
+                            });
+                        } else {
+                            msg.reply('sorry no scum chats currently exist');
+                        }
+                    }
+                }
+            } 
         }
 
         
