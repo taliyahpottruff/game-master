@@ -167,7 +167,7 @@ bot.on('message', async msg=>{
                         console.log(reason);
                     });
                 }
-            } else if (command == 'lynch') {
+            } else if (command == 'lynch' || command == 'vote') {
                 //Vote to lynch a player if available
                 if (gameIndex >= 0) {
                     // Check to make sure that a mention occurs
@@ -176,6 +176,10 @@ bot.on('message', async msg=>{
                         if (!game.night && game.day > 0) {
                             if (mentions[0].id == bot.user.id) {
                                 return msg.reply("stop trying to lynch me :eyes: I will genuinely end you...");
+                            }
+
+                            if (msg.guild.member(mentions[0]).roles.cache.has(game.cache.gmRole)) {
+                                return msg.channel.send(`${msg.author} is trying to lynch the GM...\nPretty scummy if you ask me...`);
                             }
 
                             const lynchee = msg.guild.member(mentions[0]);
@@ -622,8 +626,6 @@ function lynchTally(channel, game) {
             if (i > 0) lynchers += ', ';
             lynchers += vote[i].name;
         }
-
-        console.log(key);
 
         output += `\n${key.name} (${vote.length}) - ${lynchers}`;
     });
