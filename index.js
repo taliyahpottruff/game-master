@@ -178,7 +178,7 @@ bot.on('message', async msg=>{
                                 return msg.reply("stop trying to lynch me :eyes: I will genuinely end you...");
                             }
 
-                            if (msg.guild.member(mentions[0]).roles.cache.has(game.cache.gmRole)) {
+                            if (mentions[0].id == game.gm) {
                                 return msg.channel.send(`${msg.author} is trying to lynch the GM...\nPretty scummy if you ask me...`);
                             }
 
