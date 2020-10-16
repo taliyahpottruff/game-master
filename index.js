@@ -49,6 +49,8 @@ bot.on('message', async msg=>{
             var gameIndex = gameExists(msg.guild.id, msg.channel.id);
             var game = activeGames[gameIndex];
 
+            console.log(msg.content); // Log each command for debugging
+
             //TODO: Turn into a switch statement so I am not YandereDev, maybe an object and called commands[commandName]
             if (command == 'create') {
                 //Start a game if none is active in this channel
