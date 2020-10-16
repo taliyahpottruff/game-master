@@ -622,6 +622,9 @@ function lynchTally(channel, game) {
             if (i > 0) lynchers += ', ';
             lynchers += vote[i].name;
         }
+
+        console.log(key);
+
         output += `\n${key.name} (${vote.length}) - ${lynchers}`;
     });
     if (hammered) {
