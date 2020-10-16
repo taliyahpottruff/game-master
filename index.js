@@ -314,11 +314,14 @@ bot.on('message', async msg=>{
                                                 const player = game.players[playerNum];
                                                 player.scum = true;
                                                 game.channels.scumChats.forEach(chat => {
-                                                    msg.guild.channels.resolve(chat).updateOverwrite(player.id, {
-                                                        VIEW_CHANNEL: true
-                                                    }).then(() => {
-                                                        console.log(`${player.name} is now scum!`);
-                                                    }).catch(console.error);
+                                                    const scumChan = msg.guild.channels.resolve(chat);
+                                                    if (scumChan) {
+                                                        scumChan.updateOverwrite(player.id, {
+                                                            VIEW_CHANNEL: true
+                                                        }).then(() => {
+                                                            console.log(`${player.name} is now scum!`);
+                                                        }).catch(console.error);
+                                                    }
                                                 });
                                                 promptMsg.edit(`Current scum:\n${getScumList()}`);
                                                 db_col_games.updateOne({_id: game._id}, {$set: {players: game.players}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
