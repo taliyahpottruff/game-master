@@ -437,7 +437,9 @@ bot.on('message', async msg=>{
                         }
                     }
                 }
-            } 
+            } else if (command == 'constitution') {
+                msg.channel.send('***Constitution of Game Master:***\n1. I can do what I want.');
+            }
         }
 
         
