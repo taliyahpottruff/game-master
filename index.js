@@ -15,7 +15,7 @@ const moment = require('moment');
 const mongodb = require('mongodb');
 const MongoClient = mongodb.MongoClient;
 const assert = require('assert');
-const db_url = `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@ds${process.env.DB_NUMBER}.mlab.com:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+const db_url = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@game-master.do9gh.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 const db_name = process.env.DB_NAME;
 var db;
 var db_col_games;
