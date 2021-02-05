@@ -216,6 +216,27 @@ bot.on('message', async msg=>{
                 } else {
                     console.log(`~ ${msg.author.username} is trying to lynch in the wrong channel.`);
                 }
+            } else if (command == 'nolynch') {
+                if (gameIndex >= 0) {
+                        // Make sure the game isn't in night phase and that it's actually started
+                        if (!game.night && game.day > 0) {
+                            var existingVote = game.votes.findIndex(vote => vote.lyncher == msg.author.id);
+                            if (existingVote < 0) {
+                                game.votes.push({
+                                    lyncher: msg.author.id,
+                                    lynchee: 'nolynch'
+                                });
+                                db_col_games.updateOne({_id: game._id}, {$set: {votes: game.votes}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
+                                lynchTally(msg.channel, game);
+                            } else if (existingVote >= 0 && game.votes[existingVote].lynchee != 'nolynch') {
+                                game.votes[existingVote].lynchee = 'nolynch';
+                                db_col_games.updateOne({_id: game._id}, {$set: {votes: game.votes}}).then(result => console.log('~ Successfully updated players in DB!')).catch(console.error);
+                                lynchTally(msg.channel, game);
+                            }
+                        }
+                } else {
+                    console.log(`~ ${msg.author.username} is trying to lynch in the wrong channel.`);
+                }
             } else if (command == 'unlynch') {
                 //Vote to unlynch a player if a vote has been cast
                 if (gameIndex >= 0) {
@@ -618,9 +639,12 @@ function lynchTally(channel, game) {
     var hammerNumber = utils.votesToLynch(game);
     var output = `Current tally (${hammerNumber} to hammer):`;
     var votes = new Map();
+    const nolynch = {id: 'nolynch', name: "No Lynch"};
     game.votes.forEach(vote => {
         const lyncherName = game.players.find(player => player.id == vote.lyncher);
-        const lyncheeName = game.players.find(player => player.id == vote.lynchee);
+        const lyncheeName = (vote.lynchee != 'nolynch') ? game.players.find(player => player.id == vote.lynchee) : nolynch;
+        console.log(vote);
+        console.log(lyncheeName);
 
         var obj = (votes.has(lyncheeName)) ? votes.get(lyncheeName) : [];
         obj.push(lyncherName);
@@ -630,6 +654,7 @@ function lynchTally(channel, game) {
     votes.forEach((vote, key) => {
         if (vote.length >= hammerNumber) {
             hammered = key;
+            if (key.id == 'nolynch') return '';
             manager.killPlayer(game, key.id, db_col_games, channel.guild);
             return '';
         }
@@ -644,7 +669,7 @@ function lynchTally(channel, game) {
     });
     if (hammered) {
         channel.send(`${hammered.name} has been lynched!`);
-        manager.nextPhase(channel, prefix, game, bot);
+        manager.nextPhase(channel, prefix, game, bot, db_col_games);
         db_col_games.updateOne({_id: game._id}, {$set: {day: game.day, night: game.night, timeLeft: game.timeLeft.toDate()}}).then(result => console.log('~ Successfully updated day in DB!')).catch(console.error);
     } else { 
         channel.send(output);
