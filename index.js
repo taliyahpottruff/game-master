@@ -437,8 +437,6 @@ bot.on('message', async msg=>{
                         }
                     }
                 }
-            } else if (command == 'constitution') {
-                msg.channel.send('***Constitution of Game Master:***\n1. I can do what I want.');
             }
         }
 
@@ -447,7 +445,8 @@ bot.on('message', async msg=>{
 });
 
 bot.on('messageReactionAdd', async (messageReaction, user) => {
-    if (!user.bot && messageReaction._emoji.name == '👍') {
+    console.log(messageReaction._emoji.name);
+    if (user.id != bot.user.id && messageReaction._emoji.name == '👍') {
         const game = matchSignupMessage(messageReaction.message);
         if (game) {
             if (game.day > 0) { //Game is already in progress
@@ -487,7 +486,7 @@ bot.on('messageReactionAdd', async (messageReaction, user) => {
 });
 
 bot.on('messageReactionRemove', async (messageReaction, user) => {
-    if (!user.bot && messageReaction._emoji.name == '👍') {
+    if (user.id != bot.user.id && messageReaction._emoji.name == '👍') {
         const game = matchSignupMessage(messageReaction.message);
         if (game) {
             if (game.day > 0) { //Game is already in progress
