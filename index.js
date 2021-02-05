@@ -185,6 +185,12 @@ bot.on('message', async msg=>{
                             }
 
                             const lynchee = msg.guild.member(mentions[0]);
+
+                            // Check if lynchee is playing
+                            if (!game.players.find(player => player.id == lynchee.id)) {
+                                return msg.reply(`that user is not playing!`);
+                            }
+
                             var existingVote = game.votes.findIndex(vote => vote.lyncher == msg.author.id);
                             if (existingVote < 0) {
                                 game.votes.push({
@@ -251,8 +257,7 @@ bot.on('message', async msg=>{
             } else if (command == 'next') {
                 if (game) {
                     if (msg.guild.member(msg.author).roles.cache.get(game.cache.gmRole.id) && game.day > 0) { //User is GM
-                        manager.nextPhase(msg.channel, prefix, game, bot);
-                        db_col_games.updateOne({_id: game._id}, {$set: {day: game.day, night: game.night, timeLeft: game.timeLeft.toDate()}}).then(result => console.log('~ Successfully updated day in DB!')).catch(console.error);
+                        manager.nextPhase(msg.channel, prefix, game, bot, db_col_games);
                     } else {
                         console.log(msg.guild.member(msg.author).roles.cache.get(game.cache.gmRole));
                         console.log(game.day);
