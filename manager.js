@@ -45,12 +45,13 @@ const initializeChannels = async (server, category, prefix, bot) => {
 exports.initializeChannels = initializeChannels;
 
 const nextPhase = (channel, prefix, game, bot, db) => {
+    const mainChannel = bot.guilds.resolve(game.server).channels.resolve(game.channel);
     if (game.night) {
         game.day++;
         game.night = false;
-        channel.updateOverwrite(game.cache.playerRole, {
+        mainChannel.updateOverwrite(game.cache.playerRole, {
             SEND_MESSAGES: true
-        }).catch(console.error);
+        }).then(channel => console.log(channel.permissionOverwrites)).catch(console.error);
         game.channels.scumChats.forEach(sc => {
             chat = channel.guild.channels.resolve(sc);
             if (!chat) return;
@@ -67,7 +68,7 @@ const nextPhase = (channel, prefix, game, bot, db) => {
         });
     } else {
         game.night = true;
-        channel.updateOverwrite(game.cache.playerRole, {
+        mainChannel.updateOverwrite(game.cache.playerRole, {
             SEND_MESSAGES: false
         }).catch(console.error);
         game.channels.scumChats.forEach(sc => {
@@ -91,7 +92,7 @@ const nextPhase = (channel, prefix, game, bot, db) => {
         votes: game.votes,
         timeLeft: game.timeLeft.toDate()
     }}).then(result => console.log('~ Successfully updated game in DB!')).catch(console.error);
-    bot.guilds.resolve(game.server).channels.resolve(game.channel).send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have *until the GM decides* to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`}`).catch(console.error);
+    mainChannel.send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have *until the GM decides* to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`}`).catch(console.error);
 };
 exports.nextPhase = nextPhase;
 
