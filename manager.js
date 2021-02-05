@@ -92,7 +92,7 @@ const nextPhase = (channel, prefix, game, bot, db) => {
         votes: game.votes,
         timeLeft: game.timeLeft.toDate()
     }}).then(result => console.log('~ Successfully updated game in DB!')).catch(console.error);
-    mainChannel.send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have *until the GM decides* to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\n*${utils.votesToLynch(game)} votes needed to hammer.*`}`).catch(console.error);
+    mainChannel.send(`**${(game.night) ? "Night" : "Day"} ${game.day} has begun! You have *until the GM decides* to ${(game.night) ? "perform your night actions!**" : `chat and decide if you want to lynch.**\nUse \`${prefix}lynch @[player]\` to vote to lynch.\nOr \`/nolynch\` to vote to no lynch today.\n*${utils.votesToLynch(game)} votes needed to hammer.*`}`).catch(console.error);
 };
 exports.nextPhase = nextPhase;
 
