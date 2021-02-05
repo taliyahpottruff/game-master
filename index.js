@@ -6,7 +6,8 @@ dotenv.config();
 
 // DISCORD SETUP
 const Discord = require('discord.js');
-const bot = new Discord.Client();
+let Intss = new Discord.Intents(Discord.Intents.ALL);
+const bot = new Discord.Client({ws: { intents: Intss }});
 
 // MOMENT SETUP
 const moment = require('moment');
