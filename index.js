@@ -714,6 +714,7 @@ gameLoop.unref();
 //Log in the bot
 bot.login(token).then((value) => {
     console.log("~ Game Master is now online!");
+    bot.user.setPresence({activity: {name: "v0.3.1"}});
     MongoClient.connect(db_url, {useUnifiedTopology: true}, async (err, client) => {
         try {
             assert.equal(null, err);
