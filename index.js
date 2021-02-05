@@ -186,8 +186,13 @@ bot.on('message', async msg=>{
 
                             const lynchee = msg.guild.member(mentions[0]);
 
-                            // Check if lynchee is playing
-                            if (!game.players.find(player => player.id == lynchee.id)) {
+                            // Check if lynchee is playing and is alive
+                            const lyncheePlayer = game.players.find(player => player.id == lynchee.id);
+                            if (lyncheePlayer) {
+                                if (!lyncheePlayer.alive) {
+                                    return msg.reply('that player is dead. You can\'t lynch a corpse...');
+                                }
+                            } else {
                                 return msg.reply(`that user is not playing!`);
                             }
 
