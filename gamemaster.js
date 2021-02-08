@@ -31,6 +31,7 @@ const databaseUtils = require('./database');
 const utils = require('./utils');
 const manager = require('./manager');
 const reactionCollection = require('./collections/reactionCollection');
+const commands = require('./commands');
 
 //Game variables
 var activeGames = [];
@@ -54,122 +55,7 @@ bot.on('message', async msg=>{
 
             //TODO: Turn into a switch statement so I am not YandereDev, maybe an object and called commands[commandName]
             if (command == 'create') {
-                //Start a game if none is active in this channel
-                if (gameIndex >= 0) { //Game already exists in this channel
-                    //Do nothing because Lumi is forcing me not to send DMs
-                } else { //No game exist right now, go ahead and create
-                    if (parts.length < 2) {
-                        return msg.reply('please specify a game name!');
-                    }
-
-                    const firstSpace = msg.content.indexOf(' ');
-                    const gameName = msg.content.slice(firstSpace+1);
-                    const gamePrefix = utils.parseGameName(gameName);
-
-                    console.log(`~ Creating "${gameName}" in #${gamePrefix}:`);
-
-                    const channels = await manager.initializeChannels(msg.guild, msg.channel.parent, gamePrefix, bot);
-
-                    var newGame = {
-                        type: "Mafia",
-                        gm: msg.author.id,
-                        server: msg.guild.id,
-                        channel: channels.primaryChannel.id,
-                        channels: {
-                            controlChannel: channels.controlChannel.id,
-                            infoBoard: channels.infoBoard.id,
-                            scumChats: channels.scumChats.map(channel => channel.id),
-                            nightTalk: channels.nightTalk.map(channel => channel.id),
-                            deadChat: channels.deadChat.id
-                        },
-                        name: gameName,
-                        currentMessage: null,
-                        cache: {
-                            playerRole: null,
-                            gmRole: null
-                        },
-                        lengthOfDays: 36000,
-                        timeLeft: moment().add(30, 'seconds'),
-                        day: 0,
-                        night: false,
-                        players: [],
-                        votes: []
-                    };
-
-                    //Create player role
-                    msg.guild.roles.create({
-                        data: {name: `${gamePrefix}-player`, permissions: new Discord.Permissions(104188992)},
-                        reason: `For the game started by ${msg.author.username}` 
-                    }).then((playerRole) => {
-                        //Give player role the proper permissions
-                        newGame.cache.playerRole = playerRole;
-                        channels.primaryChannel.updateOverwrite(playerRole, {
-                            SEND_MESSAGES: true
-                        }).catch(console.error);
-
-                        //Create the GM role
-                        msg.guild.roles.create({
-                            data: {name: `${gamePrefix}-gm`, permissions: new Discord.Permissions(104188992)},
-                            reason: `For the game started by ${msg.author.username}`
-                        }).then((gmRole) => {
-                            //Give GM role proper permissions
-                            newGame.cache.gmRole = gmRole;
-                            channels.controlChannel.updateOverwrite(gmRole, {
-                                VIEW_CHANNEL: true
-                            }).catch(console.error);
-                            channels.infoBoard.updateOverwrite(gmRole, {
-                                SEND_MESSAGES: true
-                            }).catch(console.error);
-                            channels.primaryChannel.updateOverwrite(gmRole, {
-                                SEND_MESSAGES: true
-                            }).catch(console.error);
-                            channels.scumChats.forEach(channel => {
-                                console.log(channel.name);
-                                channel.updateOverwrite(gmRole, {
-                                    VIEW_CHANNEL: true,
-                                    SEND_MESSAGES: true
-                                });
-                            });
-                            channels.nightTalk.forEach(channel => {
-                                channel.updateOverwrite(gmRole, {
-                                    VIEW_CHANNEL: true,
-                                    SEND_MESSAGES: true
-                                });
-                            });
-                            channels.deadChat.updateOverwrite(gmRole, {
-                                VIEW_CHANNEL: true
-                            });
-            
-                            //Add GM role to GM
-                            msg.member.roles.add(gmRole);
-                            msg.guild.member(bot.user).roles.add(gmRole);
-                            
-                            //Let everyone know
-                            msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nReact with 👍 to join this fun game!`).addField('Status', 'Signups in progress!')).then(message => {
-                                message.react('👍');
-                                
-                                newGame.currentMessage = message;
-                                const serializedGame = databaseUtils.serializeGame(newGame);
-                                console.log(serializedGame);
-                            
-                                db_col_games.insertOne(serializedGame).then((result) => {
-                                    console.log('Game has successfully been created!');
-                                    newGame._id = result.ops[0]._id;
-                                    activeGames.push(newGame);
-                                }).catch((err) => {
-                                    console.log("CRITICAL ERROR IN INSERTION!");
-                                    console.log(err);
-                                });
-                            });
-                        }).catch((reason) => {
-                            msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create GM role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the GM role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?').setColor('#FF0000'));
-                            console.log(reason);
-                        });
-                    }).catch((reason) => {
-                        msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create player role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the player role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?').setColor('#FF0000'));
-                        console.log(reason);
-                    });
-                }
+                commands['create'](bot, msg, mentions, parts, game);
             } else if (command == 'lynch' || command == 'vote') {
                 //Vote to lynch a player if available
                 if (gameIndex >= 0) {
@@ -260,7 +146,7 @@ bot.on('message', async msg=>{
                         else if (!a.alive && b.alive) return 1;
                         else return 0;
                     });
-                    var liststring = 'Player\'s currently alive:\n';
+                    var liststring = 'Players currently alive:\n';
                     var deadStrike = (dead) => (dead) ? '' : '~~';
                     for (var i = 0; i < activeGames[gameIndex].players.length; i++) {
                         liststring += `${deadStrike(activeGames[gameIndex].players[i].alive)}${activeGames[gameIndex].players[i].name}${deadStrike(activeGames[gameIndex].players[i].alive)}\n`;
@@ -714,7 +600,7 @@ gameLoop.unref();
 //Log in the bot
 bot.login(token).then((value) => {
     console.log("~ Game Master is now online!");
-    bot.user.setPresence({activity: {name: "v0.3.1"}});
+    bot.user.setPresence({activity: {name: "v0.4.0a1"}});
     MongoClient.connect(db_url, {useUnifiedTopology: true}, async (err, client) => {
         try {
             assert.equal(null, err);
@@ -725,6 +611,7 @@ bot.login(token).then((value) => {
             //Fetch info from DB
             activeGames = [];
             db_col_games = db.collection('games');
+            commands.init(utils, manager, db_col_games, activeGames);
             const gameArray = await db_col_games.find().toArray();
             for (var i = 0; i < gameArray.length; i++) {
                 const gameObj = await databaseUtils.deserializeGame(gameArray[i], bot);
