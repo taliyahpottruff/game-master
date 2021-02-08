@@ -146,7 +146,7 @@ bot.on('message', async msg=>{
                         else if (!a.alive && b.alive) return 1;
                         else return 0;
                     });
-                    var liststring = 'Player\'s currently alive:\n';
+                    var liststring = 'Players currently alive:\n';
                     var deadStrike = (dead) => (dead) ? '' : '~~';
                     for (var i = 0; i < activeGames[gameIndex].players.length; i++) {
                         liststring += `${deadStrike(activeGames[gameIndex].players[i].alive)}${activeGames[gameIndex].players[i].name}${deadStrike(activeGames[gameIndex].players[i].alive)}\n`;
