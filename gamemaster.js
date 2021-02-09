@@ -355,6 +355,8 @@ bot.on('message', async msg=>{
                         }
                     }
                 }
+            } else if (command == 'controlpanel') {
+                commands['controlpanel'](bot, msg, mentions, parts, game);
             }
         }
 
@@ -591,7 +593,7 @@ gameLoop.unref();
 //Log in the bot
 bot.login(token).then((value) => {
     console.log("~ Game Master is now online!");
-    bot.user.setPresence({activity: {name: "v0.3.2"}});
+    bot.user.setPresence({activity: {name: "v0.4.0a4"}});
     MongoClient.connect(db_url, {useUnifiedTopology: true}, async (err, client) => {
         try {
             assert.equal(null, err);

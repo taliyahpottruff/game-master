@@ -11,13 +11,26 @@ const init = (u, m, d, a) => {
     activeGames = a;
 }
 
+// Helper functions
+async function controlMessage(channel, game) {
+    // Purge control panel
+    const messages = await channel.messages.fetch({limit: 100});
+    channel.bulkDelete(messages);
+
+    // Send control message
+    const embed = new Discord.MessageEmbed().setTitle(game.name);
+    const message = await channel.send(embed);
+    game.controlMessage = message;
+}
+
+// Export
 module.exports = {
     init,
     create: async function(bot, msg, mentions, parts, game) {
-        //Start a game if none is active in this channel
+        // Start a game if none is active in this channel
         if (game) { //Game already exists in this channel
-            //Do nothing because Lumi is forcing me not to send DMs
-        } else { //No game exist right now, go ahead and create
+            // Do nothing because Lumi is forcing me not to send DMs
+        } else { // No game exist right now, go ahead and create
             if (parts.length < 2) {
                 return msg.reply('please specify a game name!');
             }
@@ -44,6 +57,7 @@ module.exports = {
                 },
                 name: gameName,
                 currentMessage: null,
+                controlMessage: null,
                 cache: {
                     playerRole: null,
                     gmRole: null
@@ -56,23 +70,23 @@ module.exports = {
                 votes: []
             };
 
-            //Create player role
+            // Create player role
             msg.guild.roles.create({
                 data: {name: `${gamePrefix}-player`, permissions: new Discord.Permissions(104188992)},
                 reason: `For the game started by ${msg.author.username}` 
             }).then((playerRole) => {
-                //Give player role the proper permissions
+                // Give player role the proper permissions
                 newGame.cache.playerRole = playerRole;
                 channels.primaryChannel.updateOverwrite(playerRole, {
                     SEND_MESSAGES: true
                 }).catch(console.error);
 
-                //Create the GM role
+                // Create the GM role
                 msg.guild.roles.create({
                     data: {name: `${gamePrefix}-gm`, permissions: new Discord.Permissions(104188992)},
                     reason: `For the game started by ${msg.author.username}`
-                }).then((gmRole) => {
-                    //Give GM role proper permissions
+                }).then(async (gmRole) => {
+                    // Give GM role proper permissions
                     newGame.cache.gmRole = gmRole;
                     channels.controlChannel.updateOverwrite(gmRole, {
                         VIEW_CHANNEL: true
@@ -100,11 +114,14 @@ module.exports = {
                         VIEW_CHANNEL: true
                     });
     
-                    //Add GM role to GM
+                    // Add GM role to GM
                     msg.member.roles.add(gmRole);
                     msg.guild.member(bot.user).roles.add(gmRole);
-                    
-                    //Let everyone know
+
+                    // Create control message
+                    await controlMessage(channels.controlChannel, newGame);
+
+                    // Let everyone know
                     msg.channel.send(new Discord.MessageEmbed().setDescription(`**SIGNUPS FOR MAFIA HAVE BEGUN!**\nReact with 👍 to join this fun game!`).addField('Status', 'Signups in progress!')).then(message => {
                         message.react('👍');
                         
@@ -112,6 +129,8 @@ module.exports = {
                         const serializedGame = databaseUtils.serializeGame(newGame);
                         console.log(serializedGame);
                     
+                        // TODO: Insertion should happen before successful message.
+                        // NOTE: Since it looks like currentMessage needs to be set, perhaps delete the message on insertion failure instead
                         db.insertOne(serializedGame).then((result) => {
                             console.log('Game has successfully been created!');
                             newGame._id = result.ops[0]._id;
@@ -129,6 +148,11 @@ module.exports = {
                 msg.reply(new Discord.MessageEmbed().setTitle('ERROR: Couldn\'t create player role!').setDescription('Sorry, I was unable to start the game due to an internal error. I was unable to create the player role. Please kindly ask the server admin(s) if I have the proper permissions to create roles, pretty please?').setColor('#FF0000'));
                 console.log(reason);
             });
+        }
+    },
+    controlpanel: async function(bot, msg, mentions, parts, game) {
+        if (game && msg.channel.id == game.channels.controlChannel) {
+            controlMessage(msg.channel, game);
         }
     }
 };

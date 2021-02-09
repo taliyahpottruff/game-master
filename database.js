@@ -15,6 +15,7 @@ const serializeGame = (game) => {
         },
         name: game.name,
         currentMessage: `${game.currentMessage.channel.id}/${game.currentMessage.id}`,
+        controlMessage: `${game.controlMessage.channel.id}/${game.controlMessage.id}`,
         cache: {
             playerRole: game.cache.playerRole.id,
             gmRole: game.cache.gmRole.id
@@ -49,6 +50,7 @@ const deserializeGame = async (game, bot) => {
         },
         name: game.name,
         currentMessage: await server.channels.resolve(game.currentMessage.split('/')[0]).messages.fetch(game.currentMessage.split('/')[1]),
+        controlMessage: (game.controlMessage) ? await server.channels.resolve(game.controlMessage.split('/')[0]).messages.fetch(game.controlMessage.split('/')[1]) : null,
         cache: {
             playerRole: await channel.guild.roles.fetch(game.cache.playerRole),
             gmRole: await channel.guild.roles.fetch(game.cache.gmRole)
