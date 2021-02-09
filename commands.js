@@ -18,9 +18,10 @@ async function controlMessage(channel, game) {
     channel.bulkDelete(messages);
 
     // Send control message
-    const embed = new Discord.MessageEmbed().setTitle(game.name);
+    const embed = new Discord.MessageEmbed().setTitle(game.name).addField("Players", "[To Be Implemented]");
     const message = await channel.send(embed);
     game.controlMessage = message;
+    return message;
 }
 
 // Export
@@ -152,7 +153,12 @@ module.exports = {
     },
     controlpanel: async function(bot, msg, mentions, parts, game) {
         if (game && msg.channel.id == game.channels.controlChannel) {
-            controlMessage(msg.channel, game);
+            const newMsg = await controlMessage(msg.channel, game);
+
+            // Update it in the database
+            db.updateOne({_id: game._id}, {$set: {controlMessage: databaseUtils.serializeGame(game).controlMessage}}).then(result => {
+                console.log('~ Updated the control message successfully');
+            }).catch(console.error);
         }
     }
 };
