@@ -571,15 +571,6 @@ const gameLoop = setInterval(() => {
         var server = bot.guilds.resolve(activeGames[i].server);
         var channel = server.channels.resolve(activeGames[i].channel);
         const timeLeft = moment(game.timeLeft).diff(moment(), 'seconds');
-        
-        //Check for signup period
-        if (game.day < 1 && timeLeft % 60 === 0) {
-            if (activeGames[i].currentMessage) {
-                activeGames[i].currentMessage.edit(new Discord.MessageEmbed()
-                    .setDescription(`**A GAME OF MAFIA HAS BEGUN!**\nReact with 👍 to join this fun game!`)
-                    .addField('Time Left', formatMinutes(timeLeft / 60 - 1)));
-            }
-        }
 
         //Game logic
         /*if (timeLeft <= 0) { //Proceed with game logic
